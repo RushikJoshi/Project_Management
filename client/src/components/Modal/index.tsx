@@ -47,18 +47,18 @@ export const Modal: React.FC<ModalProps> = ({
                 className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
               />
             </Dialog.Overlay>
-            <Dialog.Content asChild>
+            <Dialog.Content asChild aria-describedby={description ? undefined : undefined}>
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.97 }}
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
               >
                 <div
                   className={cn(
-                    'w-full bg-white dark:bg-surface-900 rounded-2xl shadow-modal border border-surface-100 dark:border-surface-800 overflow-hidden',
-                    'max-h-[95vh] flex flex-col',
+                    'w-full bg-white dark:bg-surface-900 shadow-modal border border-surface-100 dark:border-surface-800 overflow-hidden',
+                    'rounded-t-3xl sm:rounded-2xl max-h-[100dvh] sm:max-h-[95vh] flex flex-col',
                     SIZE_MAP[size],
                     className
                   )}

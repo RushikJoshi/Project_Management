@@ -8,6 +8,7 @@ import {
 import { cn, formatDate } from '../../utils/helpers';
 import { ROLE_CONFIG } from '../../app/constants';
 import { useAppStore } from '../../context/appStore';
+import { usersService } from '../../services/api';
 import { UserAvatar } from '../../components/UserAvatar';
 import { Modal } from '../../components/Modal';
 import { Table, ProgressBar, EmptyState } from '../../components/ui';
@@ -103,8 +104,19 @@ export const AdminWorkspacesPage: React.FC = () => {
 export const AdminUsersPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all');
-  const { users } = useAppStore();
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'team_member' as Role,
+    jobTitle: '',
+    department: '',
+  });
+  const [createError, setCreateError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const { users, addUser } = useAppStore();
 
   const filtered = users.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
@@ -121,6 +133,40 @@ export const AdminUsersPage: React.FC = () => {
     { value: 'team_member', label: 'Member' },
   ];
 
+  const CREATE_ROLE_OPTIONS: Role[] = ['admin', 'manager', 'team_leader', 'team_member'];
+
+  const handleCreateChange = (field: keyof typeof createForm, value: string) => {
+    setCreateForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const resetCreateForm = () => {
+    setCreateForm({
+      name: '',
+      email: '',
+      password: '',
+      role: 'team_member',
+      jobTitle: '',
+      department: '',
+    });
+    setCreateError('');
+    setIsCreating(false);
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError('');
+    setIsCreating(true);
+    try {
+      const res = await usersService.create(createForm);
+      addUser(res.data.data ?? res.data);
+      setCreateOpen(false);
+      resetCreateForm();
+    } catch (error: any) {
+      setCreateError(error?.response?.data?.error?.message || error?.response?.data?.message || 'Failed to create user');
+      setIsCreating(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="page-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -128,7 +174,7 @@ export const AdminUsersPage: React.FC = () => {
           <h1 className="page-title text-2xl sm:text-3xl">Users</h1>
           <p className="page-subtitle text-xs sm:text-sm">{users.length} users across all workspaces</p>
         </div>
-        <button className="btn-primary btn-md w-full sm:w-auto"><Plus size={16} /> Create New User</button>
+        <button onClick={() => setCreateOpen(true)} className="btn-primary btn-md w-full sm:w-auto"><Plus size={16} /> Create New User</button>
       </div>
 
       {/* Filters */}
@@ -238,6 +284,72 @@ export const AdminUsersPage: React.FC = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={createOpen}
+        onClose={() => {
+          setCreateOpen(false);
+          resetCreateForm();
+        }}
+        title="Create User"
+        description="Add a new user to the current company workspace."
+        size="md"
+      >
+        <form onSubmit={handleCreateUser} className="p-4 sm:p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="label">Full Name</label>
+              <input value={createForm.name} onChange={e => handleCreateChange('name', e.target.value)} className="input" placeholder="Enter full name" required />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Email</label>
+              <input type="email" value={createForm.email} onChange={e => handleCreateChange('email', e.target.value)} className="input" placeholder="name@company.com" required />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Temporary Password</label>
+              <input type="password" minLength={8} value={createForm.password} onChange={e => handleCreateChange('password', e.target.value)} className="input" placeholder="Minimum 8 characters" required />
+            </div>
+            <div>
+              <label className="label">Role</label>
+              <select value={createForm.role} onChange={e => handleCreateChange('role', e.target.value)} className="input">
+                {CREATE_ROLE_OPTIONS.map(role => (
+                  <option key={role} value={role}>{ROLE_CONFIG[role].label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Job Title</label>
+              <input value={createForm.jobTitle} onChange={e => handleCreateChange('jobTitle', e.target.value)} className="input" placeholder="e.g. Product Manager" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Department</label>
+              <input value={createForm.department} onChange={e => handleCreateChange('department', e.target.value)} className="input" placeholder="e.g. Operations" />
+            </div>
+          </div>
+
+          {createError && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+              {createError}
+            </div>
+          )}
+
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setCreateOpen(false);
+                resetCreateForm();
+              }}
+              className="btn-secondary btn-md flex-1"
+            >
+              Cancel
+            </button>
+            <button type="submit" disabled={isCreating} className="btn-primary btn-md flex-1">
+              {isCreating ? 'Creating...' : 'Create User'}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

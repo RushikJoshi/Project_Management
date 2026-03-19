@@ -5,10 +5,12 @@ export const getTasks = async (req, res) => {
         const { start, end } = req.query;
         let query = {};
         if (start && end) {
-            query.startDateTime = { $gte: new Date(start) };
+            const startDate = new Date(start);
             const endDate = new Date(end);
-            endDate.setHours(23, 59, 59, 999);
-            query.endDateTime = { $lte: endDate };
+            query.$and = [
+                { startDateTime: { $lte: endDate } },
+                { endDateTime: { $gte: startDate } }
+            ];
         }
         
         // Role-based filtering
@@ -28,7 +30,13 @@ export const getTasks = async (req, res) => {
 
 export const createTask = async (req, res) => {
     try {
-        const task = await AdminCalendarTask.create(req.body);
+        const payload = {
+            ...req.body,
+            tags: Array.isArray(req.body.tags) ? req.body.tags : [],
+            comments: Array.isArray(req.body.comments) ? req.body.comments : [],
+            attachments: Array.isArray(req.body.attachments) ? req.body.attachments : []
+        };
+        const task = await AdminCalendarTask.create(payload);
         res.status(201).json(task);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -38,7 +46,7 @@ export const createTask = async (req, res) => {
 export const updateTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const task = await AdminCalendarTask.findByIdAndUpdate(id, req.body, { new: true });
+        const task = await AdminCalendarTask.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
         res.status(200).json(task);
     } catch (error) {
         res.status(500).json({ message: error.message });

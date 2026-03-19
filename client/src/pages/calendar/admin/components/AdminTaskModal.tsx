@@ -71,8 +71,8 @@ export const AdminTaskModal = () => {
 
     return (
         <Modal open={isOpen} onClose={() => setSelectedTask(null)} title={isNew ? 'Create Admin Task' : 'Edit Admin Task'} size="lg">
-            <div className="flex flex-col md:flex-row h-[70vh] md:h-auto overflow-hidden">
-                <form onSubmit={handleSave} className="p-6 space-y-5 flex-1 overflow-y-auto border-r border-surface-200 dark:border-surface-800">
+            <div className="flex flex-col lg:flex-row max-h-[calc(100dvh-88px)] overflow-hidden">
+                <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-5 flex-1 overflow-y-auto lg:border-r border-surface-200 dark:border-surface-800">
                     <input
                         required type="text" placeholder="Task title"
                         value={title} onChange={e => setTitle(e.target.value)}
@@ -82,7 +82,7 @@ export const AdminTaskModal = () => {
                     <div className="flex flex-col gap-4 bg-surface-50/50 dark:bg-surface-900/30 p-4 rounded-xl border border-surface-200 dark:border-surface-800">
                         <div className="flex items-center gap-3">
                             <Clock size={16} className="text-surface-400 w-24" />
-                            <div className="flex items-center gap-2 flex-1">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
                                 <input type="datetime-local" required value={format(startTime, "yyyy-MM-dd'T'HH:mm")} onChange={e => setStartTime(new Date(e.target.value))} className="input h-9 text-xs flex-1" />
                                 <span className="text-surface-400">—</span>
                                 <input type="datetime-local" required value={format(endTime, "yyyy-MM-dd'T'HH:mm")} onChange={e => setEndTime(new Date(e.target.value))} className="input h-9 text-xs flex-1" />
@@ -115,11 +115,11 @@ export const AdminTaskModal = () => {
                         <textarea placeholder="Add a detailed description..." value={description} onChange={e => setDescription(e.target.value)} className="input min-h-[100px] py-2 flex-1 resize-y box-border overflow-hidden" />
                     </div>
 
-                    <div className="flex justify-between gap-3 pt-4 mt-6 border-t border-surface-100 dark:border-surface-800">
+                    <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 mt-6 border-t border-surface-100 dark:border-surface-800">
                         {isNew ? <div /> : (
                             <button type="button" onClick={handleDelete} className="btn-ghost btn-md text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 font-semibold"><Trash2 size={16} /> Delete</button>
                         )}
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <button type="button" onClick={() => setSelectedTask(null)} className="btn-ghost btn-md font-semibold">Cancel</button>
                             <button type="submit" className="btn-primary btn-md font-semibold px-6 shadow-md">{isNew ? 'Create Task' : 'Save Changes'}</button>
                         </div>
@@ -128,7 +128,7 @@ export const AdminTaskModal = () => {
 
                 {/* Right side panel for comments and attachments */}
                 {!isNew && task && (
-                    <div className="w-full md:w-80 bg-surface-50 dark:bg-surface-900/30 flex flex-col">
+                    <div className="w-full lg:w-80 bg-surface-50 dark:bg-surface-900/30 flex flex-col border-t lg:border-t-0 border-surface-200 dark:border-surface-800">
                         <div className="p-4 border-b border-surface-200 dark:border-surface-800 shrink-0">
                             <h4 className="text-sm font-semibold flex items-center gap-2 mb-3"><Paperclip size={14} /> Attachments</h4>
                             <div className="space-y-2 mb-3 max-h-32 overflow-y-auto">
@@ -145,7 +145,7 @@ export const AdminTaskModal = () => {
                             </label>
                         </div>
 
-                        <div className="flex-1 flex flex-col p-4 overflow-hidden">
+                        <div className="flex-1 flex flex-col p-4 overflow-hidden min-h-[260px]">
                             <h4 className="text-sm font-semibold flex items-center gap-2 mb-3 shrink-0"><MessageSquare size={14} /> Comments</h4>
                             <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
                                 {task.comments?.map((c: any) => (

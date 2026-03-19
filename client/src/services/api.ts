@@ -61,6 +61,7 @@ export const tasksService = {
 export const usersService = {
   getAll: () => api.get('/users'),
   getById: (id: string) => api.get(`/users/${id}`),
+  create: (data: unknown) => api.post('/users', data),
   update: (id: string, data: unknown) => api.put(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
   me: () => api.get('/users/me'),

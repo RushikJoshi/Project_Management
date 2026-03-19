@@ -20,6 +20,7 @@ interface AppStore {
   toggleSidebar: () => void;
   toggleDarkMode: () => void;
 
+  addUser: (user: User) => void;
   addProject: (project: Project) => void;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -76,6 +77,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   setActiveProject: (id) => set({ activeProjectId: id }),
   toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+  addUser: (user) => set(s => ({ users: [user, ...s.users] })),
   toggleDarkMode: () => {
     const newMode = !get().darkMode;
     set({ darkMode: newMode });

@@ -32,3 +32,18 @@ export async function get(req, res, next) {
   }
 }
 
+export async function create(req, res, next) {
+  try {
+    const { companyId, workspaceId, role } = req.auth;
+    const user = await UserService.createUser({
+      companyId,
+      workspaceId,
+      actorRole: role,
+      input: req.body,
+    });
+    return res.status(201).json({ success: true, data: user });
+  } catch (e) {
+    return next(e);
+  }
+}
+

@@ -6,8 +6,11 @@ import {
     getTasks, createTask, updateTask, deleteTask, 
     addComment, uploadAttachment, getWaitingListTasks
 } from '../../controllers/admin/adminCalendar.controller.js';
+import { verifyToken } from '../../middleware/auth.middleware.js';
 
 const router = express.Router();
+
+router.use(verifyToken);
 
 const uploadDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadDir)) {

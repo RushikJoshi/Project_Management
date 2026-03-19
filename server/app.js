@@ -13,6 +13,10 @@ import { requestLogger } from './src/utils/logger.js';
 import { notFoundHandler, errorHandler } from './src/middleware/error.middleware.js';
 import { sanitizeMongoBodyParams } from './src/middleware/sanitize.middleware.js';
 import v1Routes from './src/routes/v1/index.js';
+import adminCalendarRoutes from './src/routes/admin/calendar.routes.js';
+import adminChatRoutes from './src/routes/admin/adminChat.routes.js';
+import adminDashboardRoutes from './src/routes/admin/adminDashboard.routes.js';
+import adminNotificationRoutes from './src/routes/admin/adminNotification.routes.js';
 
 const app = express();
 
@@ -59,6 +63,14 @@ app.get('/readyz', (_req, res) => {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/v1', v1Routes);
+app.use('/api/admin/calendar', adminCalendarRoutes);
+app.use('/api/admin/chat', adminChatRoutes);
+app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/admin/notifications', adminNotificationRoutes);
+app.use('/api/v1/admin/calendar', adminCalendarRoutes);
+app.use('/api/v1/admin/chat', adminChatRoutes);
+app.use('/api/v1/admin/dashboard', adminDashboardRoutes);
+app.use('/api/v1/admin/notifications', adminNotificationRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

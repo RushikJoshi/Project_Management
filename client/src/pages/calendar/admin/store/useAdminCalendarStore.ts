@@ -34,51 +34,10 @@ interface AdminCalendarState {
     uploadAttachment: (taskId: string, file: File) => Promise<void>;
 }
 
-import { addHours, startOfDay, addDays, subDays } from 'date-fns';
-
-const today = new Date();
-const mockTasks: AdminTask[] = [
-    {
-        _id: '1', title: 'Executive meeting', description: 'Briefing with stakeholders',
-        assignedUser: 'Sarah', startDateTime: addHours(startOfDay(today), 9).toISOString(), endDateTime: addHours(startOfDay(today), 11).toISOString(),
-        priority: 'blue', status: 'Pending', tags: ['meeting'], comments: [], attachments: []
-    },
-    {
-        _id: '2', title: 'Analyze results', description: 'Weekly performance metrics',
-        assignedUser: 'John', startDateTime: addHours(startOfDay(subDays(today, 1)), 10).toISOString(), endDateTime: addHours(startOfDay(subDays(today, 1)), 12).toISOString(),
-        priority: 'none', status: 'Done', tags: [], comments: [], attachments: []
-    },
-    {
-        _id: '3', title: 'Negotiate contract terms', description: 'With John',
-        assignedUser: 'Mike', startDateTime: addHours(startOfDay(today), 12).toISOString(), endDateTime: addHours(startOfDay(today), 14).toISOString(),
-        priority: 'yellow', status: 'In Progress', tags: [], comments: [], attachments: []
-    },
-    {
-        _id: '4', title: 'Discuss design drafts', description: 'Website Development',
-        assignedUser: 'Emma', startDateTime: addHours(startOfDay(today), 13).toISOString(), endDateTime: addHours(startOfDay(today), 14.5).toISOString(),
-        priority: 'yellow', status: 'Pending', tags: [], comments: [], attachments: []
-    },
-    {
-        _id: '5', title: 'Prepare information', description: 'Webinar slide deck',
-        assignedUser: 'Sofia', startDateTime: addHours(startOfDay(today), 12.5).toISOString(), endDateTime: addHours(startOfDay(today), 15.5).toISOString(),
-        priority: 'green', status: 'Pending', tags: [], comments: [], attachments: []
-    },
-    {
-        _id: '6', title: 'Write email copy', description: 'Onboarding campaign',
-        assignedUser: 'Marry', startDateTime: addHours(startOfDay(addDays(today, 1)), 13).toISOString(), endDateTime: addHours(startOfDay(addDays(today, 1)), 14).toISOString(),
-        priority: 'green', status: 'Pending', tags: [], comments: [], attachments: []
-    },
-    {
-        _id: '7', title: 'Analyze ROI of campaigns', description: 'Marketing meeting',
-        assignedUser: 'Sofia', startDateTime: addHours(startOfDay(addDays(today, 1)), 9).toISOString(), endDateTime: addHours(startOfDay(addDays(today, 1)), 10).toISOString(),
-        priority: 'red', status: 'Pending', tags: [], comments: [], attachments: []
-    }
-];
-
-export const useAdminCalendarStore = create<AdminCalendarState>((set, get) => ({
+export const useAdminCalendarStore = create<AdminCalendarState>((set) => ({
     view: 'week',
     currentDate: new Date(),
-    tasks: mockTasks,
+    tasks: [],
     loading: false,
     selectedTask: null,
 
@@ -103,7 +62,7 @@ export const useAdminCalendarStore = create<AdminCalendarState>((set, get) => ({
             set({ tasks: res.data, loading: false });
         } catch (err) {
             console.error(err);
-            set({ loading: false });
+            set({ tasks: [], loading: false });
         }
     },
 
@@ -117,22 +76,30 @@ export const useAdminCalendarStore = create<AdminCalendarState>((set, get) => ({
     },
 
     updateTask: async (id, data) => {
-        set((state) => ({
-            tasks: state.tasks.map((t) => (t._id === id ? { ...t, ...data } : t)),
-        }));
         try {
-            await API.put(`/admin/calendar/tasks/${id}`, data);
+            const res = await API.put(`/admin/calendar/tasks/${id}`, data);
+            set((state) => ({
+                tasks: state.tasks.map((t) => (t._id === id ? res.data : t)),
+                selectedTask:
+                    state.selectedTask && state.selectedTask !== 'new' && state.selectedTask._id === id
+                        ? res.data
+                        : state.selectedTask,
+            }));
         } catch (err) {
             console.error(err);
         }
     },
 
     deleteTask: async (id) => {
-        set((state) => ({
-            tasks: state.tasks.filter((t) => t._id !== id),
-        }));
         try {
             await API.delete(`/admin/calendar/tasks/${id}`);
+            set((state) => ({
+                tasks: state.tasks.filter((t) => t._id !== id),
+                selectedTask:
+                    state.selectedTask && state.selectedTask !== 'new' && state.selectedTask._id === id
+                        ? null
+                        : state.selectedTask,
+            }));
         } catch (err) {
             console.error(err);
         }
@@ -143,6 +110,10 @@ export const useAdminCalendarStore = create<AdminCalendarState>((set, get) => ({
             const res = await API.post(`/admin/calendar/tasks/${taskId}/comments`, comment);
             set((state) => ({
                 tasks: state.tasks.map((t) => (t._id === taskId ? res.data : t)),
+                selectedTask:
+                    state.selectedTask && state.selectedTask !== 'new' && state.selectedTask._id === taskId
+                        ? res.data
+                        : state.selectedTask,
             }));
         } catch (err) {
             console.error(err);
@@ -158,6 +129,10 @@ export const useAdminCalendarStore = create<AdminCalendarState>((set, get) => ({
             });
             set((state) => ({
                 tasks: state.tasks.map((t) => (t._id === taskId ? res.data : t)),
+                selectedTask:
+                    state.selectedTask && state.selectedTask !== 'new' && state.selectedTask._id === taskId
+                        ? res.data
+                        : state.selectedTask,
             }));
         } catch (err) {
             console.error(err);

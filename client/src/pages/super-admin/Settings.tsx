@@ -37,28 +37,28 @@ export const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <div className="md:col-span-2">
                     <label className="label">Site Name</label>
-                    <input defaultValue="Flowboard SaaS" className="input" />
+                    <input defaultValue="Gitakshmi PMS" className="input" />
                   </div>
                   <div>
                     <label className="label">Support Email address</label>
-                    <input defaultValue="support@flowboard.io" className="input" />
+                    <input defaultValue="gitakshmi@support.com" className="input" />
                   </div>
                   <div>
                     <label className="label">Admin Email address</label>
-                    <input defaultValue="admin@flowboard.io" className="input" />
+                    <input defaultValue="admin@gmail.com" className="input" />
                   </div>
                   <div>
                     <label className="label">Site Language</label>
                     <select className="input">
                       <option>English</option>
-                      <option>Spanish</option>
-                      <option>French</option>
+                      <option>Hindi - Coming Soon</option>
+                      <option>Gujarati - Coming Soon</option>
                     </select>
                   </div>
                   <div>
                     <label className="label">Time Zone</label>
                     <select className="input">
-                      <option>UTC (GMT)</option>
+                      <option>IST (GMT)</option>
                       <option>PST (Pacific)</option>
                       <option>EST (Eastern)</option>
                     </select>
