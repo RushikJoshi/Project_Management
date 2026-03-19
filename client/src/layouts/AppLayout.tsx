@@ -10,7 +10,7 @@ import { useAuthStore } from '../context/authStore.ts';
 import { AdminChatSidebar } from '../pages/calendar/admin/components/AdminChatSidebar.tsx';
 
 export const AppLayout: React.FC = () => {
-  const { sidebarCollapsed, darkMode } = useAppStore();
+  const { sidebarCollapsed, darkMode, bootstrap } = useAppStore();
   const { user } = useAuthStore();
 
   useEffect(() => {
@@ -20,6 +20,21 @@ export const AppLayout: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7356/ingest/f2bbb2a3-c016-48c5-8c3f-7d86788fca17',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1d61fd'},body:JSON.stringify({sessionId:'1d61fd',runId:'pre-fix',hypothesisId:'H7',location:'client/src/layouts/AppLayout.tsx:26',message:'bootstrap_start',data:{hasUser:Boolean(user)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion agent log
+    bootstrap().then(() => {
+      // #region agent log
+      fetch('http://127.0.0.1:7356/ingest/f2bbb2a3-c016-48c5-8c3f-7d86788fca17',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1d61fd'},body:JSON.stringify({sessionId:'1d61fd',runId:'pre-fix',hypothesisId:'H7',location:'client/src/layouts/AppLayout.tsx:30',message:'bootstrap_success',data:{ok:true},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion agent log
+    }).catch((e) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7356/ingest/f2bbb2a3-c016-48c5-8c3f-7d86788fca17',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1d61fd'},body:JSON.stringify({sessionId:'1d61fd',runId:'pre-fix',hypothesisId:'H7',location:'client/src/layouts/AppLayout.tsx:35',message:'bootstrap_error',data:{message:String(e?.message||e)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion agent log
+    });
+  }, [bootstrap]);
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-950">

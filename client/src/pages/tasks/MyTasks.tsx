@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn, formatDate } from '../../utils/helpers';
 import { useAuthStore } from '../../context/authStore';
 import { useAppStore } from '../../context/appStore';
-import { MOCK_PROJECTS, PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
 import { TaskCard } from '../../components/TaskCard';
 import { TaskModal } from '../../components/TaskModal';
 import { EmptyState } from '../../components/ui';
@@ -23,7 +23,7 @@ const FILTERS: { value: TaskStatus | 'all' | 'overdue'; label: string; color?: s
 export const MyTasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { tasks, quickTasks } = useAppStore();
+  const { tasks, quickTasks, projects } = useAppStore();
   const [filter, setFilter] = useState<typeof FILTERS[0]['value']>('all');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
@@ -185,7 +185,7 @@ export const MyTasksPage: React.FC = () => {
             </div>
             <div className="space-y-2">
               {sorted.map((task, i) => {
-                const project = MOCK_PROJECTS.find(p => p.id === task.projectId);
+                const project = projects.find(p => p.id === task.projectId);
                 return (
                   <motion.div
                     key={task.id}

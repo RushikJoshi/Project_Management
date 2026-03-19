@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -9,20 +9,35 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'rec
 import { cn, formatDate, formatRelativeTime, getProgressColor } from '../../utils/helpers';
 import { useAuthStore } from '../../context/authStore';
 import { useAppStore } from '../../context/appStore';
-import { MOCK_USERS, MOCK_ACTIVITIES, PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
+import { companiesService, activityService } from '../../services/api';
 import { UserAvatar, AvatarGroup } from '../../components/UserAvatar';
 import { ProgressBar } from '../../components/ui';
 import { TaskCard } from '../../components/TaskCard';
 
-const CHART_DATA = [
-  { day: 'Mon', completed: 8, added: 12 },
-  { day: 'Tue', completed: 14, added: 9 },
-  { day: 'Wed', completed: 11, added: 15 },
-  { day: 'Thu', completed: 18, added: 11 },
-  { day: 'Fri', completed: 22, added: 14 },
-  { day: 'Sat', completed: 7, added: 6 },
-  { day: 'Sun', completed: 5, added: 4 },
-];
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function buildChartDataFromTasks(tasks: { createdAt?: string; updatedAt?: string; status?: string }[]): { day: string; completed: number; added: number }[] {
+  const now = new Date();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    d.setHours(0, 0, 0, 0);
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    const dayLabel = DAY_LABELS[d.getDay()];
+    const added = tasks.filter(t => {
+      const created = t.createdAt ? new Date(t.createdAt) : null;
+      return created && created >= d && created < next;
+    }).length;
+    const completed = tasks.filter(t => {
+      if (t.status !== 'done') return false;
+      const updated = t.updatedAt ? new Date(t.updatedAt) : null;
+      return updated && updated >= d && updated < next;
+    }).length;
+    return { day: dayLabel, completed, added };
+  });
+}
 
 const StatCard: React.FC<{
   icon: React.ReactNode;
@@ -56,17 +71,64 @@ const StatCard: React.FC<{
   </motion.div>
 );
 
+type CompanyRow = { id: string; name: string; usersCount?: number; projectsCount?: number; status: string; color?: string; createdAt?: string };
+type ActivityRow = { id: string; type: string; description: string; createdAt: string };
+
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { projects, tasks } = useAppStore();
+  const { projects, tasks, users } = useAppStore();
+  const [companies, setCompanies] = useState<CompanyRow[]>([]);
+  const [platformActivity, setPlatformActivity] = useState<ActivityRow[]>([]);
+  const [companiesLoading, setCompaniesLoading] = useState(false);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   const isSuperAdmin = user?.role === 'super_admin';
 
-  const myTasks = tasks.filter(t => t.assigneeIds.includes(user?.id || '') && t.status !== 'done');
+  useEffect(() => {
+    if (isSuperAdmin) {
+      setCompaniesLoading(true);
+      companiesService.getAll()
+        .then((res) => {
+          const data = res.data?.data ?? res.data ?? [];
+          setCompanies(Array.isArray(data) ? data : []);
+        })
+        .catch(() => setCompanies([]))
+        .finally(() => setCompaniesLoading(false));
+    }
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
+    setActivityLoading(true);
+    activityService.getRecent(20)
+      .then((res) => {
+        const data = res.data?.data ?? res.data ?? [];
+        setPlatformActivity(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setPlatformActivity([]))
+      .finally(() => setActivityLoading(false));
+  }, []);
+
+  const chartData = useMemo(() => buildChartDataFromTasks(tasks), [tasks]);
+  const myTasks = tasks.filter(t => t.assigneeIds?.includes(user?.id || '') && t.status !== 'done');
   const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done');
   const completedThisWeek = tasks.filter(t => t.status === 'done');
   const activeProjects = projects.filter(p => p.status === 'active');
+
+  const planCounts = isSuperAdmin && companies.length > 0
+    ? (() => {
+        const byStatus = companies.reduce<Record<string, number>>((acc, c) => {
+          acc[c.status || 'active'] = (acc[c.status || 'active'] || 0) + 1;
+          return acc;
+        }, {});
+        const total = companies.length;
+        return [
+          { label: 'Active', count: byStatus['active'] ?? 0, color: 'bg-indigo-500', percent: total ? Math.round(((byStatus['active'] ?? 0) / total) * 100) : 0 },
+          { label: 'Trial', count: byStatus['trial'] ?? 0, color: 'bg-brand-500', percent: total ? Math.round(((byStatus['trial'] ?? 0) / total) * 100) : 0 },
+          { label: 'Suspended', count: byStatus['suspended'] ?? 0, color: 'bg-amber-500', percent: total ? Math.round(((byStatus['suspended'] ?? 0) / total) * 100) : 0 },
+        ].filter(p => p.count > 0);
+      })()
+    : null;
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -100,8 +162,8 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={<Building2 size={20} />} label="Total Companies" value={124} sub="active on platform" color="#3366ff" trend={8} delay={0} />
-          <StatCard icon={<Users size={20} />} label="Total Users" value="24.5k" sub="across all companies" color="#10b981" trend={12} delay={0.05} />
+          <StatCard icon={<Building2 size={20} />} label="Total Companies" value={companiesLoading ? '…' : companies.length} sub="active on platform" color="#3366ff" delay={0} />
+          <StatCard icon={<Users size={20} />} label="Total Users" value={companiesLoading ? '…' : companies.reduce((n, c) => n + (c.usersCount ?? 0), 0)} sub="across all companies" color="#10b981" delay={0.05} />
           <StatCard icon={<Activity size={20} />} label="System Uptime" value="99.9%" sub="all regions healthy" color="#f59e0b" trend={0} delay={0.1} />
           <StatCard icon={<Zap size={20} />} label="Active Modules" value="12/12" sub="no reported incidents" color="#7c3aed" trend={0} delay={0.15} />
         </div>
@@ -127,7 +189,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={CHART_DATA} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
+                <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3366ff" stopOpacity={0.15} />
@@ -155,21 +217,22 @@ export const DashboardPage: React.FC = () => {
                 <button onClick={() => navigate('/companies')} className="btn-ghost btn-sm text-xs text-brand-600">View all <ArrowRight size={12} /></button>
               </div>
               <div className="space-y-4">
-                {['Acme Corp', 'Global Tech', 'Stellar Systems'].map((c, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50">
+                {(companies.slice(0, 5)).map((c) => (
+                  <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-surface-700 flex items-center justify-center font-bold text-xs text-brand-600 shadow-sm">{c[0]}</div>
+                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-surface-700 flex items-center justify-center font-bold text-xs text-brand-600 shadow-sm">{(c.name || '')[0]}</div>
                       <div>
-                        <p className="text-sm font-semibold text-surface-900 dark:text-white">{c}</p>
-                        <p className="text-[10px] text-surface-400">Registered {3 + i} hours ago</p>
+                        <p className="text-sm font-semibold text-surface-900 dark:text-white">{c.name}</p>
+                        <p className="text-[10px] text-surface-400">{c.createdAt ? formatDate(c.createdAt) : '—'}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold text-surface-700 dark:text-surface-300">Pro Plan</p>
-                      <p className="text-[10px] text-emerald-600 font-medium">Active</p>
+                      <p className="text-xs font-bold text-surface-700 dark:text-surface-300">—</p>
+                      <p className="text-[10px] text-emerald-600 font-medium">{c.status || 'Active'}</p>
                     </div>
                   </div>
                 ))}
+                {companies.length === 0 && !companiesLoading && <p className="text-sm text-surface-400 py-2">No companies yet</p>}
               </div>
             </motion.div>
           </div>
@@ -251,10 +314,10 @@ export const DashboardPage: React.FC = () => {
       {/* Stats */}
       {user?.role === 'super_admin' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={<Building2 size={20} />} label="Total Companies" value="482" sub="active tenants" color="#3366ff" trend={12} delay={0} />
-          <StatCard icon={<Users size={20} />} label="Total Users" value="24.5k" sub="across platform" color="#10b981" trend={8} delay={0.05} />
-          <StatCard icon={<Activity size={20} />} label="Active Users" value="8.2k" sub="last 24 hours" color="#f59e0b" trend={-3} delay={0.1} />
-          <StatCard icon={<AlertTriangle size={20} />} label="System Alerts" value="12" sub="need attention" color="#f43f5e" trend={-15} delay={0.15} />
+          <StatCard icon={<Building2 size={20} />} label="Total Companies" value={companies.length} sub="active tenants" color="#3366ff" delay={0} />
+          <StatCard icon={<Users size={20} />} label="Total Users" value={users.length} sub="across platform" color="#10b981" delay={0.05} />
+          <StatCard icon={<Activity size={20} />} label="Active Users" value={users.filter(u => u.isActive).length} sub="last 24 hours" color="#f59e0b" delay={0.1} />
+          <StatCard icon={<AlertTriangle size={20} />} label="System Alerts" value="—" sub="need attention" color="#f43f5e" delay={0.15} />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -295,7 +358,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={CHART_DATA} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3366ff" stopOpacity={0.15} />
@@ -337,13 +400,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="divide-y divide-surface-50 dark:divide-surface-800">
               {user?.role === 'super_admin' ? (
-                // Super Admin Recent Companies
-                [
-                  { id: 'c1', name: 'Acme Corp', users: 154, projects: 12, color: '#3366ff', status: 'Active' },
-                  { id: 'c2', name: 'Global Tech', users: 89, projects: 8, color: '#10b981', status: 'Active' },
-                  { id: 'c3', name: 'Stellar Systems', users: 45, projects: 5, color: '#f59e0b', status: 'Trial' },
-                  { id: 'c4', name: 'Flowboard', users: 210, projects: 18, color: '#7c3aed', status: 'Active' },
-                ].map((company, i) => (
+                companies.slice(0, 5).map((company, i) => (
                   <motion.div
                     key={company.id}
                     initial={{ opacity: 0, x: -10 }}
@@ -353,24 +410,24 @@ export const DashboardPage: React.FC = () => {
                     className="flex items-center gap-4 px-5 py-3.5 hover:bg-surface-50 dark:hover:bg-surface-800/50 cursor-pointer transition-colors"
                   >
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                      style={{ backgroundColor: company.color }}>
-                      {company.name[0]}
+                      style={{ backgroundColor: company.color || '#3366ff' }}>
+                      {(company.name || '')[0]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-surface-800 dark:text-surface-200 truncate">{company.name}</p>
-                      <p className="text-xs text-surface-400 mt-1">{company.users} users • {company.projects} projects</p>
+                      <p className="text-xs text-surface-400 mt-1">{company.usersCount ?? 0} users • {company.projectsCount ?? 0} projects</p>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold uppercase', 
-                        company.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                      )}>{company.status}</span>
+                        (company.status || 'Active') === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                      )}>{company.status || 'Active'}</span>
                       <ArrowRight size={14} className="text-surface-300" />
                     </div>
                   </motion.div>
                 ))
               ) : (
                 activeProjects.slice(0, 5).map((project, i) => {
-                  const assignees = MOCK_USERS.filter(u => project.members.includes(u.id));
+                  const assignees = users.filter(u => project.members.includes(u.id));
                   return (
                     <motion.div
                       key={project.id}

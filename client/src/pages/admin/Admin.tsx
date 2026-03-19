@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2, Users, Crown, BarChart3, Plus, Search,
@@ -6,7 +6,8 @@ import {
   CreditCard, TrendingUp, Zap, Star, CheckCircle
 } from 'lucide-react';
 import { cn, formatDate } from '../../utils/helpers';
-import { MOCK_WORKSPACES, MOCK_USERS, ROLE_CONFIG } from '../../app/data';
+import { ROLE_CONFIG } from '../../app/constants';
+import { useAppStore } from '../../context/appStore';
 import { UserAvatar } from '../../components/UserAvatar';
 import { Modal } from '../../components/Modal';
 import { Table, ProgressBar, EmptyState } from '../../components/ui';
@@ -15,7 +16,8 @@ import type { User, Role } from '../../app/types';
 // ─── Workspaces Admin ─────────────────────────────────────────────────────────
 export const AdminWorkspacesPage: React.FC = () => {
   const [search, setSearch] = useState('');
-  const filtered = MOCK_WORKSPACES.filter(w => w.name.toLowerCase().includes(search.toLowerCase()));
+  const { workspaces, users } = useAppStore();
+  const filtered = workspaces.filter(w => w.name.toLowerCase().includes(search.toLowerCase()));
 
   const PLAN_BADGE: Record<string, string> = {
     free: 'badge-gray',
@@ -36,10 +38,10 @@ export const AdminWorkspacesPage: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total Workspaces', value: MOCK_WORKSPACES.length, color: '#3366ff', icon: <Building2 size={18} /> },
-          { label: 'Active Users', value: MOCK_USERS.filter(u => u.isActive).length, color: '#10b981', icon: <Users size={18} /> },
-          { label: 'Pro/Enterprise', value: MOCK_WORKSPACES.filter(w => w.plan !== 'free').length, color: '#7c3aed', icon: <Crown size={18} /> },
-          { label: 'MRR', value: '$4,280', color: '#f59e0b', icon: <TrendingUp size={18} /> },
+          { label: 'Total Workspaces', value: workspaces.length, color: '#3366ff', icon: <Building2 size={18} /> },
+          { label: 'Active Users', value: users.filter(u => u.isActive).length, color: '#10b981', icon: <Users size={18} /> },
+          { label: 'Pro/Enterprise', value: workspaces.filter(w => w.plan !== 'free').length, color: '#7c3aed', icon: <Crown size={18} /> },
+          { label: 'MRR', value: '—', color: '#f59e0b', icon: <TrendingUp size={18} /> },
         ].map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card p-4">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: `${stat.color}15` }}>
@@ -102,8 +104,9 @@ export const AdminUsersPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all');
+  const { users } = useAppStore();
 
-  const filtered = MOCK_USERS.filter(u => {
+  const filtered = users.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
@@ -123,9 +126,9 @@ export const AdminUsersPage: React.FC = () => {
       <div className="page-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="page-title text-2xl sm:text-3xl">Users</h1>
-          <p className="page-subtitle text-xs sm:text-sm">{MOCK_USERS.length} users across all workspaces</p>
+          <p className="page-subtitle text-xs sm:text-sm">{users.length} users across all workspaces</p>
         </div>
-        <button className="btn-primary btn-md w-full sm:w-auto"><Plus size={16} /> Invite User</button>
+        <button className="btn-primary btn-md w-full sm:w-auto"><Plus size={16} /> Create New User</button>
       </div>
 
       {/* Filters */}

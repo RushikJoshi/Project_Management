@@ -7,7 +7,6 @@ import { useAuthStore } from '../../context/authStore';
 import { useAppStore } from '../../context/appStore';
 import { UserAvatar } from '../UserAvatar';
 import { NotificationPanel } from '../NotificationPanel';
-import { MOCK_PROJECTS, MOCK_TASKS, MOCK_USERS } from '../../app/data';
 import { MessageCircle } from 'lucide-react';
 import { useAdminChatStore } from '../../pages/calendar/admin/store/useAdminChatStore.ts';
 
@@ -31,7 +30,7 @@ export const Topbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { darkMode, toggleDarkMode, sidebarCollapsed, unreadNotificationsCount } = useAppStore();
+  const { darkMode, toggleDarkMode, sidebarCollapsed, unreadNotificationsCount, projects, tasks, users } = useAppStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
@@ -53,16 +52,16 @@ export const Topbar: React.FC = () => {
   const breadcrumbs = segments.map((seg, i) => {
     const path = '/' + segments.slice(0, i + 1).join('/');
     // Check if it's a project ID
-    const project = MOCK_PROJECTS.find(p => p.id === seg);
+    const project = projects.find(p => p.id === seg);
     const label = project ? project.name : (BREADCRUMB_MAP[seg] || seg);
     return { label, path };
   });
 
   // Search results
   const searchResults = searchQuery.length > 1 ? [
-    ...MOCK_PROJECTS.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 3).map(p => ({ type: 'project', id: p.id, label: p.name, sub: 'Project', color: p.color, path: `/projects/${p.id}` })),
-    ...MOCK_TASKS.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 4).map(t => ({ type: 'task', id: t.id, label: t.title, sub: 'Task', color: '#3366ff', path: `/projects/${t.projectId}` })),
-    ...MOCK_USERS.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 3).map(u => ({ type: 'user', id: u.id, label: u.name, sub: u.jobTitle || 'User', color: u.color || '#3366ff', path: `/admin/users` })),
+    ...projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 3).map(p => ({ type: 'project', id: p.id, label: p.name, sub: 'Project', color: p.color, path: `/projects/${p.id}` })),
+    ...tasks.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 4).map(t => ({ type: 'task', id: t.id, label: t.title, sub: 'Task', color: '#3366ff', path: `/projects/${t.projectId}` })),
+    ...users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 3).map(u => ({ type: 'user', id: u.id, label: u.name, sub: u.jobTitle || 'User', color: u.color || '#3366ff', path: `/admin/users` })),
   ] : [];
 
   return (

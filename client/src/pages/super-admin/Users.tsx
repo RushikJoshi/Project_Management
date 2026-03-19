@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Search, Mail, Edit3, Trash2, ShieldAlert, UserPlus, Filter } from 'lucide-react';
 import { cn, formatDate } from '../../utils/helpers';
-import { MOCK_USERS, ROLE_CONFIG } from '../../app/data';
+import { ROLE_CONFIG } from '../../app/constants';
 import { UserAvatar } from '../../components/UserAvatar';
 import { Table, EmptyState } from '../../components/ui';
 import { Modal } from '../../components/Modal';
+import { useAppStore } from '../../context/appStore';
 
 const ROLES = [
   { value: 'all', label: 'All Roles' },
@@ -17,12 +18,13 @@ const ROLES = [
 ];
 
 export const UsersPage: React.FC = () => {
+  const { users } = useAppStore();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const filtered = MOCK_USERS.filter(u => {
+  const filtered = users.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
@@ -33,7 +35,7 @@ export const UsersPage: React.FC = () => {
       <div className="page-header flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="page-title">Users</h1>
-          <p className="page-subtitle">{MOCK_USERS.length} total users across the platform</p>
+          <p className="page-subtitle">{users.length} total users across the platform</p>
         </div>
         <button className="btn-primary btn-md" onClick={() => { setSelectedUser(null); setShowModal(true); }}>
           <UserPlus size={16} />

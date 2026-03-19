@@ -2,9 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MessageSquare, Paperclip, Clock, CheckSquare } from 'lucide-react';
 import { cn, formatDate } from '../../utils/helpers';
-import { PRIORITY_CONFIG } from '../../app/data';
+import { PRIORITY_CONFIG } from '../../app/constants';
 import { UserAvatar, AvatarGroup } from '../UserAvatar';
-import { MOCK_USERS } from '../../app/data';
+import { useAppStore } from '../../context/appStore';
 import type { Task } from '../../app/types';
 
 interface TaskCardProps {
@@ -16,7 +16,8 @@ interface TaskCardProps {
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, isDragging, compact }) => {
   const priority = PRIORITY_CONFIG[task.priority];
-  const assignees = MOCK_USERS.filter(u => task.assigneeIds.includes(u.id));
+  const { users } = useAppStore();
+  const assignees = users.filter(u => task.assigneeIds.includes(u.id));
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done';
 
   if (compact) {

@@ -4,7 +4,7 @@ import { ArrowLeft, Calendar, Flag, Trash2, User2, Zap } from 'lucide-react';
 import { cn, formatDate } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
 import { useAuthStore } from '../../context/authStore';
-import { MOCK_USERS, PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
 import { EmptyState } from '../../components/ui';
 import { QuickTaskModal } from '../../components/QuickTaskModal';
 import type { Priority, QuickTaskStatus, Role } from '../../app/types';
@@ -15,15 +15,15 @@ export const QuickTaskDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuthStore();
-  const { quickTasks, updateQuickTask, deleteQuickTask, setQuickTaskStatus } = useAppStore();
+  const { users, quickTasks, updateQuickTask, deleteQuickTask, setQuickTaskStatus } = useAppStore();
   const task = quickTasks.find(t => t.id === id);
 
   const [editOpen, setEditOpen] = useState(false);
 
-  const assignee = task?.assigneeId ? MOCK_USERS.find(u => u.id === task.assigneeId) : null;
-  const reporter = task ? MOCK_USERS.find(u => u.id === task.reporterId) : null;
+  const assignee = task?.assigneeId ? users.find(u => u.id === task.assigneeId) : null;
+  const reporter = task ? users.find(u => u.id === task.reporterId) : null;
   const assignableUsers = useMemo(() => (
-    MOCK_USERS.filter(u => u.isActive).filter(u => ASSIGNABLE_ROLES.includes(u.role))
+    users.filter(u => u.isActive).filter(u => ASSIGNABLE_ROLES.includes(u.role))
   ), []);
 
   if (!task) {

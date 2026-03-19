@@ -11,7 +11,7 @@ import {
 } from 'date-fns';
 import { cn, formatDate } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
-import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
 import { TaskModal } from '../../components/TaskModal';
 import type { Task } from '../../app/types';
 

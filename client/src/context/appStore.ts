@@ -1,8 +1,10 @@
 import { create } from 'zustand';
-import type { Project, Task, Team, Notification, TaskStatus, QuickTask, QuickTaskStatus } from '../app/types';
-import { MOCK_PROJECTS, MOCK_TASKS, MOCK_QUICK_TASKS, MOCK_TEAMS, MOCK_NOTIFICATIONS } from '../app/data';
+import type { Project, Task, Team, Notification, TaskStatus, QuickTask, QuickTaskStatus, User, Workspace } from '../app/types';
+import { projectsService, tasksService, teamsService, quickTasksService, notificationsService, usersService, workspacesService } from '../services/api';
 
 interface AppStore {
+  users: User[];
+  workspaces: Workspace[];
   projects: Project[];
   tasks: Task[];
   quickTasks: QuickTask[];
@@ -11,6 +13,8 @@ interface AppStore {
   activeProjectId: string | null;
   sidebarCollapsed: boolean;
   darkMode: boolean;
+
+  bootstrap: () => Promise<void>;
 
   setActiveProject: (id: string | null) => void;
   toggleSidebar: () => void;
@@ -38,14 +42,37 @@ interface AppStore {
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
-  projects: MOCK_PROJECTS,
-  tasks: MOCK_TASKS,
-  quickTasks: MOCK_QUICK_TASKS,
-  teams: MOCK_TEAMS,
-  notifications: MOCK_NOTIFICATIONS,
+  users: [],
+  workspaces: [],
+  projects: [],
+  tasks: [],
+  quickTasks: [],
+  teams: [],
+  notifications: [],
   activeProjectId: null,
   sidebarCollapsed: false,
   darkMode: false,
+
+  bootstrap: async () => {
+    const [usersRes, workspacesRes, projectsRes, tasksRes, teamsRes, quickRes, notifRes] = await Promise.all([
+      usersService.getAll(),
+      workspacesService.getAll(),
+      projectsService.getAll(),
+      tasksService.getAll(),
+      teamsService.getAll(),
+      quickTasksService.getAll(),
+      notificationsService.getAll(),
+    ]);
+    set({
+      users: usersRes.data.data ?? usersRes.data,
+      workspaces: workspacesRes.data.data ?? workspacesRes.data,
+      projects: projectsRes.data.data ?? projectsRes.data,
+      tasks: tasksRes.data.data ?? tasksRes.data,
+      teams: teamsRes.data.data ?? teamsRes.data,
+      quickTasks: quickRes.data.data ?? quickRes.data,
+      notifications: notifRes.data.data ?? notifRes.data,
+    });
+  },
 
   setActiveProject: (id) => set({ activeProjectId: id }),
   toggleSidebar: () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),

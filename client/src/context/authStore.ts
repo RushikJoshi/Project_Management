@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, Role } from '../app/types';
-import { MOCK_USERS } from '../app/data';
+import { authService } from '../services/api';
 
 interface AuthStore {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string, role?: Role) => Promise<{ success: boolean; error?: string }>;
+  refresh: () => Promise<boolean>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -18,33 +20,45 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
 
       login: async (email: string, _password: string, role?: Role) => {
         set({ isLoading: true });
-        await new Promise(r => setTimeout(r, 800));
-
-        // Find user by role for demo, or by email
-        let user = MOCK_USERS.find(u => u.email === email);
-        if (!user && role) {
-          user = MOCK_USERS.find(u => u.role === role);
+        try {
+          // role is only used by the demo role buttons to prefill email;
+          // backend determines actual role from the user record.
+          const res = await authService.login(email, _password);
+          const { token, refreshToken, user } = res.data.data;
+          set({ user, token, refreshToken, isAuthenticated: true, isLoading: false });
+          return { success: true };
+        } catch (e: any) {
+          set({ isLoading: false });
+          const msg = e?.response?.data?.error?.message || e?.response?.data?.message || 'Login failed';
+          return { success: false, error: msg };
         }
-        if (!user) {
-          user = MOCK_USERS[4]; // default team member
-        }
+      },
 
-        set({
-          user,
-          token: `mock_token_${user.id}`,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        return { success: true };
+      refresh: async () => {
+        const rt = get().refreshToken;
+        if (!rt) return false;
+        try {
+          const res = await authService.refresh(rt);
+          const { token, refreshToken, user } = res.data.data;
+          set({ token, refreshToken, user, isAuthenticated: true });
+          return true;
+        } catch {
+          set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+          return false;
+        }
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
+        const rt = get().refreshToken;
+        // fire and forget
+        if (rt) authService.logout().catch(() => {});
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
       },
 
       updateUser: (updates) => {
@@ -56,7 +70,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'flowboard-auth',
-      partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ user: state.user, token: state.token, refreshToken: state.refreshToken, isAuthenticated: state.isAuthenticated }),
     }
   )
 );

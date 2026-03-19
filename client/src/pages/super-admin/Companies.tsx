@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -6,12 +6,14 @@ import {
   Plus, Search, LayoutGrid, List, Filter, SortAsc,
   Building2, Users, Calendar, MoreHorizontal, Trash2, Edit3, ShieldAlert
 } from 'lucide-react';
-import { cn, formatDate, generateId } from '../../utils/helpers';
+import { cn, formatDate } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
 import { UserAvatar } from '../../components/UserAvatar';
 import { Table, EmptyState } from '../../components/ui';
 import { Modal } from '../../components/Modal';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { useEffect } from 'react';
+import { companiesService } from '../../services/api';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'All' },
@@ -37,13 +39,14 @@ interface Company {
   color: string;
 }
 
-const MOCK_COMPANIES: Company[] = [
-  { id: 'c1', name: 'Acme Corp', email: 'admin@acme.com', usersCount: 154, projectsCount: 12, status: 'active', createdAt: '2024-01-10', color: '#3366ff' },
-  { id: 'c2', name: 'Global Tech', email: 'contact@global.tech', usersCount: 89, projectsCount: 8, status: 'active', createdAt: '2024-02-15', color: '#10b981' },
-  { id: 'c3', name: 'Stellar Systems', email: 'hello@stellar.io', usersCount: 45, projectsCount: 5, status: 'trial', createdAt: '2024-03-01', color: '#f59e0b' },
-  { id: 'c4', name: 'Flowboard', email: 'support@flow.com', usersCount: 210, projectsCount: 18, status: 'active', createdAt: '2023-11-20', color: '#7c3aed' },
-  { id: 'c5', name: 'Nebula Labs', email: 'admin@nebula.ai', usersCount: 12, projectsCount: 2, status: 'suspended', createdAt: '2024-03-10', color: '#f43f5e' },
-];
+type CompanyCreateForm = {
+  name: string;
+  adminName: string;
+  adminEmail: string;
+  adminPassword: string;
+  initialUserLimit: number;
+  status: 'active' | 'suspended' | 'trial';
+};
 
 export const CompaniesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -51,19 +54,76 @@ export const CompaniesPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  const filtered = MOCK_COMPANIES.filter(c => {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CompanyCreateForm>({
+    defaultValues: {
+      name: '',
+      adminName: '',
+      adminEmail: '',
+      adminPassword: '',
+      initialUserLimit: 50,
+      status: 'active',
+    },
+  });
+
+  useEffect(() => {
+    companiesService.getAll().then((r) => setCompanies(r.data.data ?? r.data)).catch(() => setCompanies([]));
+  }, []);
+
+  useEffect(() => {
+    if (showModal && !selectedCompany) {
+      reset({
+        name: '',
+        adminName: '',
+        adminEmail: '',
+        adminPassword: '',
+        initialUserLimit: 50,
+        status: 'active',
+      });
+    }
+  }, [showModal, selectedCompany, reset]);
+
+  const filtered = companies.filter(c => {
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || c.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const onCreateCompany = async (data: CompanyCreateForm) => {
+    setSaving(true);
+    // #region agent log
+    fetch('http://127.0.0.1:7356/ingest/f2bbb2a3-c016-48c5-8c3f-7d86788fca17',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1d61fd'},body:JSON.stringify({sessionId:'1d61fd',runId:'pre-fix',hypothesisId:'H10',location:'client/src/pages/super-admin/Companies.tsx:102',message:'companies_create_submit',data:{nameLen:data.name.length,adminEmailDomain:(data.adminEmail.split('@')[1]||''),status:data.status,initialUserLimit:data.initialUserLimit},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion agent log
+
+    try {
+      const res = await companiesService.create({
+        name: data.name,
+        adminName: data.adminName,
+        adminEmail: data.adminEmail,
+        adminPassword: data.adminPassword,
+        initialUserLimit: data.initialUserLimit,
+        status: data.status,
+      });
+      const created = res.data.data ?? res.data;
+      setCompanies((prev) => [created, ...prev]);
+      setShowModal(false);
+    } catch (e: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7356/ingest/f2bbb2a3-c016-48c5-8c3f-7d86788fca17',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1d61fd'},body:JSON.stringify({sessionId:'1d61fd',runId:'pre-fix',hypothesisId:'H10',location:'client/src/pages/super-admin/Companies.tsx:123',message:'companies_create_error',data:{status:e?.response?.status||null,message:e?.response?.data?.error?.message||e?.message||'unknown'},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion agent log
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="page-header flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="page-title">Companies</h1>
-          <p className="page-subtitle">{MOCK_COMPANIES.length} total companies registered on the platform</p>
+          <p className="page-subtitle">{companies.length} total companies registered on the platform</p>
         </div>
         <button onClick={() => { setSelectedCompany(null); setShowModal(true); }} className="btn-primary btn-md">
           <Plus size={16} />
@@ -153,34 +213,72 @@ export const CompaniesPage: React.FC = () => {
 
       {/* Add/Edit Modal */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title={selectedCompany ? "Edit Company" : "Add Company"} size="md">
-        <div className="p-6 space-y-4">
+        <form onSubmit={handleSubmit(onCreateCompany)} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="label">Company Name</label>
-              <input defaultValue={selectedCompany?.name} className="input" placeholder="Acme Corp" />
+              <label className="label">Company Name *</label>
+              <input
+                {...register('name', { required: 'Company name is required' })}
+                className={cn('input', errors.name && 'border-rose-400')}
+                placeholder="Acme Corp"
+              />
             </div>
+
             <div className="col-span-2">
-              <label className="label">Admin Email</label>
-              <input defaultValue={selectedCompany?.email} className="input" placeholder="admin@acme.com" />
+              <label className="label">Admin Full Name *</label>
+              <input
+                {...register('adminName', { required: 'Admin name is required' })}
+                className={cn('input', errors.adminName && 'border-rose-400')}
+                placeholder="John Doe"
+              />
             </div>
+
+            <div className="col-span-2">
+              <label className="label">Admin Email *</label>
+              <input
+                {...register('adminEmail', { required: 'Admin email is required' })}
+                className={cn('input', errors.adminEmail && 'border-rose-400')}
+                placeholder="admin@acme.com"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <label className="label">Admin Password *</label>
+              <input
+                {...register('adminPassword', { required: 'Password is required', minLength: { value: 8, message: 'Min 8 characters' } })}
+                className={cn('input', errors.adminPassword && 'border-rose-400')}
+                placeholder="Create a strong password"
+                type="password"
+              />
+            </div>
+
             <div>
               <label className="label">Initial User Limit</label>
-              <input type="number" defaultValue={selectedCompany?.usersCount || 50} className="input" />
+              <input
+                type="number"
+                {...register('initialUserLimit', { valueAsNumber: true, min: 1 })}
+                className="input"
+                defaultValue={50}
+              />
             </div>
+
             <div>
               <label className="label">Status</label>
-              <select defaultValue={selectedCompany?.status || 'active'} className="input">
+              <select {...register('status')} className="input" defaultValue="active">
                 <option value="active">Active</option>
                 <option value="trial">Trial</option>
                 <option value="suspended">Suspended</option>
               </select>
             </div>
           </div>
+
           <div className="flex gap-3 pt-2">
-            <button onClick={() => setShowModal(false)} className="btn-secondary btn-md flex-1">Cancel</button>
-            <button onClick={() => setShowModal(false)} className="btn-primary btn-md flex-1">{selectedCompany ? "Save Changes" : "Register Company"}</button>
+            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary btn-md flex-1">Cancel</button>
+            <button type="submit" disabled={saving} className="btn-primary btn-md flex-1">
+              {saving ? 'Registering...' : 'Register Company'}
+            </button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

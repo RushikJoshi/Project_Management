@@ -4,7 +4,7 @@ import { Plus, Search, Zap, User, Calendar, CheckCircle2 } from 'lucide-react';
 import { cn, formatDate } from '../../utils/helpers';
 import { useAuthStore } from '../../context/authStore';
 import { useAppStore } from '../../context/appStore';
-import { PRIORITY_CONFIG, STATUS_CONFIG, MOCK_USERS } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
 import { EmptyState, Tabs, TabsContent } from '../../components/ui';
 import { QuickTaskModal } from '../../components/QuickTaskModal';
 import type { QuickTask, QuickTaskStatus } from '../../app/types';
@@ -29,7 +29,7 @@ export const QuickTasksPage: React.FC = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { user } = useAuthStore();
-  const { quickTasks } = useAppStore();
+  const { quickTasks, users } = useAppStore();
 
   const [scope, setScope] = useState<ScopeFilter>('assigned_to_me');
   const [status, setStatus] = useState<StatusFilter>('all');
@@ -178,8 +178,8 @@ export const QuickTasksPage: React.FC = () => {
           ) : (
             <div className="space-y-2">
               {filtered.map((t, i) => {
-                const assignee = t.assigneeId ? MOCK_USERS.find(u => u.id === t.assigneeId) : null;
-                const reporter = MOCK_USERS.find(u => u.id === t.reporterId);
+                const assignee = t.assigneeId ? users.find(u => u.id === t.assigneeId) : null;
+                const reporter = users.find(u => u.id === t.reporterId);
                 const priority = PRIORITY_CONFIG[t.priority];
                 const statusCfg =
                   t.status === 'todo' ? STATUS_CONFIG.todo :

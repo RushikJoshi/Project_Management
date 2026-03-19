@@ -9,7 +9,7 @@ import {
 import { cn, formatDate, getProgressColor, generateId } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
 import { useAuthStore } from '../../context/authStore';
-import { MOCK_USERS, PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
 import { KanbanBoard } from '../../components/KanbanBoard';
 import { TaskModal } from '../../components/TaskModal';
 import { TaskCard } from '../../components/TaskCard';
@@ -31,7 +31,7 @@ interface TaskFormData {
 export const ProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { projects, tasks, addTask, updateProject } = useAppStore();
+  const { projects, tasks, users, addTask, updateProject } = useAppStore();
   const { user } = useAuthStore();
   const [activeView, setActiveView] = useState('kanban');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -42,7 +42,7 @@ export const ProjectDetailPage: React.FC = () => {
 
   const project = projects.find(p => p.id === id);
   const projectTasks = tasks.filter(t => t.projectId === id);
-  const members = MOCK_USERS.filter(u => project?.members.includes(u.id));
+  const members = users.filter(u => project?.members.includes(u.id));
 
   const { register, handleSubmit, reset } = useForm<TaskFormData>({
     defaultValues: { priority: 'medium', status: defaultStatus }
@@ -353,7 +353,7 @@ export const ProjectDetailPage: React.FC = () => {
               <div className="relative">
                 <select {...register('assigneeId')} className="input pr-8 appearance-none">
                   <option value="">Unassigned</option>
-                  {MOCK_USERS.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
                 <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none" />
               </div>

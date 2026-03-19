@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Bell, CheckCheck, MessageSquare, UserPlus, AlertCircle, FolderOpen, Filter } from 'lucide-react';
 import { cn, formatRelativeTime } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
-import { MOCK_USERS } from '../../app/data';
 import { UserAvatar } from '../../components/UserAvatar';
 import { EmptyState } from '../../components/ui';
 import type { Notification } from '../../app/types';
@@ -17,7 +16,7 @@ const NOTIF_ICONS = {
 };
 
 export const NotificationsPage: React.FC = () => {
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useAppStore();
+  const { notifications, users, markNotificationRead, markAllNotificationsRead } = useAppStore();
   const unread = notifications.filter(n => !n.isRead).length;
 
   const grouped = notifications.reduce((acc, n) => {
@@ -77,7 +76,7 @@ export const NotificationsPage: React.FC = () => {
                 <div className="card overflow-hidden divide-y divide-surface-50 dark:divide-surface-800">
                   {notifs.map((notif, i) => {
                     const { icon: Icon, color } = NOTIF_ICONS[notif.type];
-                    const sender = MOCK_USERS[i % MOCK_USERS.length];
+                    const sender = users[i % Math.max(users.length, 1)];
 
                     return (
                       <motion.div
@@ -112,7 +111,7 @@ export const NotificationsPage: React.FC = () => {
                           <p className="text-xs text-surface-400 mt-1.5">{formatRelativeTime(notif.createdAt)}</p>
                         </div>
 
-                        <UserAvatar name={sender.name} color={sender.color} size="sm" className="flex-shrink-0 mt-0.5" />
+                        {sender && <UserAvatar name={sender.name} color={sender.color} size="sm" className="flex-shrink-0 mt-0.5" />}
                       </motion.div>
                     );
                   })}

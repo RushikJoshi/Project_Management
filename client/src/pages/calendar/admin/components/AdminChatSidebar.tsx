@@ -5,8 +5,8 @@ import { useAdminChatStore, Conversation, Message } from '../store/useAdminChatS
 import { useAuthStore } from '../../../../context/authStore.ts';
 import { format } from 'date-fns';
 import { cn } from '../../../../utils/helpers.ts';
-import { MOCK_USERS } from '../../../../app/data.ts';
-import API from '../../../../api/axios.ts';
+import { useAppStore } from '../../../../context/appStore.ts';
+import api from '../../../../services/api';
 
 const MessageBubble = ({ message, isMe }: { message: Message, isMe: boolean }) => (
     <div className={cn(
@@ -68,8 +68,9 @@ const CreateGroupView = ({ onCancel, onCreate }: { onCancel: () => void, onCreat
     const [name, setName] = useState('');
     const [selected, setSelected] = useState<string[]>([]);
     const [search, setSearch] = useState('');
+    const { users } = useAppStore();
 
-    const filteredUsers = MOCK_USERS.filter(u => 
+    const filteredUsers = users.filter(u =>
         u.name.toLowerCase().includes(search.toLowerCase())
     );
 
@@ -158,8 +159,8 @@ export const AdminChatSidebar = () => {
 
     const fetchProjects = async () => {
         try {
-            const res = await API.get('/projects');
-            setProjects(res.data);
+            const res = await api.get('/projects');
+            setProjects(res.data.data ?? res.data);
         } catch (error) {
             console.error('Failed to fetch projects', error);
         }

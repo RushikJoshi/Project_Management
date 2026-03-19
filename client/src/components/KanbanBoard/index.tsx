@@ -10,7 +10,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Plus, MoreHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../utils/helpers';
-import { STATUS_CONFIG } from '../../app/data';
+import { STATUS_CONFIG } from '../../app/constants';
 import { useAppStore } from '../../context/appStore';
 import { TaskCard } from '../TaskCard';
 import type { Task, TaskStatus } from '../../app/types';

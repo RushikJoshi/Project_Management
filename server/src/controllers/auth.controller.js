@@ -1,40 +1,66 @@
-import User from '../models/user.model.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import * as AuthService from '../services/auth.service.js';
 
-export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-        const token = jwt.sign(
-            { id: user._id, role: user.role, name: user.name },
-            process.env.JWT_SECRET || 'your_fallback_secret',
-            { expiresIn: '24h' }
-        );
-        res.status(200).json({ token, user: { id: user._id, name: user.name, role: user.role } });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+export async function register(req, res, next) {
+  try {
+    const { name, email, password, workspace } = req.body;
+    const result = await AuthService.register({ name, email, password, workspaceName: workspace });
+    return res.status(201).json({
+      success: true,
+      data: {
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
+      },
+    });
+  } catch (e) {
+    return next(e);
+  }
+}
 
-export const register = async (req, res) => {
-    try {
-        const { name, email, password, role } = req.body;
-        const existing = await User.findOne({ email });
-        if (existing) {
-            return res.status(400).json({ message: "User already exists" });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await User.create({ name, email, password: hashedPassword, role });
-        res.status(201).json({ message: "User registered" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+export async function login(req, res, next) {
+  try {
+    const { email, password } = req.body;
+    const result = await AuthService.login({ email, password });
+    return res.status(200).json({
+      success: true,
+      data: {
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
+      },
+    });
+  } catch (e) {
+    return next(e);
+  }
+}
+
+export async function refresh(req, res, next) {
+  try {
+    const { refreshToken } = req.body;
+    const result = await AuthService.refresh({
+      refreshToken,
+      userAgent: req.headers['user-agent'] || null,
+      ip: req.ip,
+    });
+    return res.status(200).json({
+      success: true,
+      data: {
+        token: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
+      },
+    });
+  } catch (e) {
+    return next(e);
+  }
+}
+
+export async function logout(req, res, next) {
+  try {
+    const { refreshToken } = req.body;
+    await AuthService.logout({ refreshToken });
+    return res.status(200).json({ success: true, data: { ok: true } });
+  } catch (e) {
+    return next(e);
+  }
+}

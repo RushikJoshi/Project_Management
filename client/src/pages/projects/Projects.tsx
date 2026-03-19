@@ -9,13 +9,13 @@ import {
 import { cn, formatDate, getProgressColor, generateId } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
 import { useAuthStore } from '../../context/authStore';
-import { MOCK_USERS, PROJECT_COLORS, STATUS_CONFIG } from '../../app/data';
+import { PROJECT_COLORS, STATUS_CONFIG } from '../../app/constants';
 import { UserAvatar, AvatarGroup } from '../../components/UserAvatar';
 import { ProgressBar, EmptyState } from '../../components/ui';
 import { Modal } from '../../components/Modal';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import type { Project, ProjectStatus } from '../../app/types';
-import API from '../../api/axios.ts';
+import { projectsService } from '../../services/api';
 
 const STATUS_FILTERS: { value: ProjectStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -46,7 +46,8 @@ const ProjectCard = React.forwardRef<HTMLDivElement, {
   onDelete: (id: string) => void;
 }>(({ project, onDelete }, ref) => {
   const navigate = useNavigate();
-  const members = MOCK_USERS.filter(u => project.members.includes(u.id));
+  const { users } = useAppStore();
+  const members = users.filter(u => project.members.includes(u.id));
   const badge = STATUS_CONFIG[project.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.todo;
 
   return (
@@ -134,7 +135,8 @@ const ProjectCard = React.forwardRef<HTMLDivElement, {
 
 const ProjectRow: React.FC<{ project: Project; onDelete: (id: string) => void }> = ({ project, onDelete }) => {
   const navigate = useNavigate();
-  const members = MOCK_USERS.filter(u => project.members.includes(u.id));
+  const { users } = useAppStore();
+  const members = users.filter(u => project.members.includes(u.id));
   const badge = PROJECT_STATUS_BADGES[project.status];
 
   return (
@@ -171,7 +173,7 @@ const ProjectRow: React.FC<{ project: Project; onDelete: (id: string) => void }>
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { projects, addProject, deleteProject } = useAppStore();
+  const { projects, users, addProject, deleteProject } = useAppStore();
   const { user } = useAuthStore();
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [search, setSearch] = useState('');
@@ -208,9 +210,13 @@ export const ProjectsPage: React.FC = () => {
       updatedAt: new Date().toISOString(),
     };
 
-    console.log(newProject);
-    API.post('/projects/create',newProject);
-    addProject(newProject);
+    projectsService.create(newProject).then((res) => {
+      const created = res.data.data ?? res.data;
+      addProject(created);
+    }).catch(() => {
+      // fallback: optimistic UI is handled by store state
+      addProject(newProject);
+    });
     setShowModal(false);
     setSelectedMembers([]);
     reset();
@@ -418,7 +424,7 @@ export const ProjectsPage: React.FC = () => {
           <div>
             <label className="label">Assign Employees</label>
             <div className="max-h-40 overflow-y-auto border border-surface-100 dark:border-surface-800 rounded-xl p-2 space-y-1">
-              {MOCK_USERS.map(u => (
+              {users.map(u => (
                 <label key={u.id} className="flex items-center gap-3 p-2 hover:bg-surface-50 dark:hover:bg-surface-800 rounded-lg cursor-pointer transition-colors">
                   <input
                     type="checkbox"

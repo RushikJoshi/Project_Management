@@ -5,7 +5,7 @@ import { Modal } from '../Modal';
 import { cn, generateId } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
 import { useAuthStore } from '../../context/authStore';
-import { MOCK_USERS, PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
 import type { Priority, QuickTask, QuickTaskStatus, Role } from '../../app/types';
 
 type QuickTaskFormData = {
@@ -27,7 +27,7 @@ interface QuickTaskModalProps {
 
 export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({ open, onClose, task }) => {
   const { user } = useAuthStore();
-  const { addQuickTask, updateQuickTask, deleteQuickTask } = useAppStore();
+  const { users, addQuickTask, updateQuickTask, deleteQuickTask } = useAppStore();
 
   const {
     register,
@@ -56,7 +56,7 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({ open, onClose, t
     });
   }, [task, reset, open]);
 
-  const assignableUsers = MOCK_USERS
+  const assignableUsers = users
     .filter(u => u.isActive)
     .filter(u => ASSIGNABLE_ROLES.includes(u.role));
 

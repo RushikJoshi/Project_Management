@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Bell, Check, CheckCheck, X, MessageSquare, AlertCircle, UserPlus, FolderOpen } from 'lucide-react';
 import { cn, formatRelativeTime } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
-import { MOCK_USERS } from '../../app/data';
 import { UserAvatar } from '../UserAvatar';
 import type { Notification } from '../../app/types';
 
@@ -20,9 +19,9 @@ const NOTIF_ICONS = {
 };
 
 const NotifItem: React.FC<{ notif: Notification }> = ({ notif }) => {
-  const { markNotificationRead } = useAppStore();
+  const { users, markNotificationRead } = useAppStore();
   const { icon: Icon, color } = NOTIF_ICONS[notif.type];
-  const sender = MOCK_USERS[Math.floor(Math.random() * MOCK_USERS.length)];
+  const sender = users[Math.floor(Math.random() * Math.max(users.length, 1))];
 
   return (
     <div
@@ -45,7 +44,7 @@ const NotifItem: React.FC<{ notif: Notification }> = ({ notif }) => {
         <p className="text-xs text-surface-400 mt-0.5 leading-relaxed">{notif.message}</p>
         <p className="text-[11px] text-surface-400 mt-1">{formatRelativeTime(notif.createdAt)}</p>
       </div>
-      <UserAvatar name={sender.name} color={sender.color} size="xs" className="flex-shrink-0 mt-0.5" />
+      {sender && <UserAvatar name={sender.name} color={sender.color} size="xs" className="flex-shrink-0 mt-0.5" />}
     </div>
   );
 };

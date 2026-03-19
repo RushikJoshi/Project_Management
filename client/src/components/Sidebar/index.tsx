@@ -11,7 +11,6 @@ import { cn } from '../../utils/helpers';
 import { useAuthStore } from '../../context/authStore';
 import { useAppStore } from '../../context/appStore';
 import { UserAvatar } from '../UserAvatar';
-import { MOCK_WORKSPACES } from '../../app/data';
 import type { Role } from '../../app/types';
 
 interface NavItem {
@@ -68,7 +67,7 @@ const ADMIN_NAV: NavItem[] = [
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { sidebarCollapsed, toggleSidebar, projects, unreadNotificationsCount } = useAppStore();
+  const { sidebarCollapsed, toggleSidebar, projects, unreadNotificationsCount, workspaces } = useAppStore();
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [projectsExpanded, setProjectsExpanded] = useState(true);
   const [openDepartments, setOpenDepartments] = useState<Record<string, boolean>>({});
@@ -76,7 +75,12 @@ export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
 
   const unread = unreadNotificationsCount();
-  const workspace = MOCK_WORKSPACES[0];
+  const workspace = workspaces[0];
+
+  // #region agent log
+  fetch('http://127.0.0.1:7356/ingest/f2bbb2a3-c016-48c5-8c3f-7d86788fca17',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1d61fd'},body:JSON.stringify({sessionId:'1d61fd',runId:'pre-fix',hypothesisId:'H6',location:'client/src/components/Sidebar/index.tsx:83',message:'sidebar_render',data:{hasUser:Boolean(user),role:user?.role||null,workspacesCount:workspaces.length,hasWorkspace:Boolean(workspace),projectsCount:projects.length},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion agent log
+
   const activeProjects = projects.filter(p => p.status === 'active');
   const recentProjects = activeProjects.slice(0, 5);
 
@@ -99,6 +103,21 @@ export const Sidebar: React.FC = () => {
     : (user?.role === 'admin')
       ? SUPER_ADMIN_NAV
       : NAV_ITEMS.filter(item => !item.roles || (user && item.roles.includes(user.role)));
+
+  if (!workspace) {
+    return (
+      <motion.aside
+        animate={window.innerWidth >= 768 ? { width: isCollapsed ? 64 : 260 } : { width: 0 }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
+        className="fixed left-0 top-0 h-full bg-white dark:bg-surface-900 border-r border-surface-100 dark:border-surface-800 z-30 hidden md:flex flex-col shadow-sidebar overflow-hidden"
+      >
+        <div className="p-4 border-b border-surface-100 dark:border-surface-800">
+          <div className="h-4 w-32 bg-surface-100 dark:bg-surface-800 rounded" />
+          <div className="h-3 w-20 bg-surface-100 dark:bg-surface-800 rounded mt-2" />
+        </div>
+      </motion.aside>
+    );
+  }
 
   return (
     <motion.aside
@@ -152,24 +171,24 @@ export const Sidebar: React.FC = () => {
             className="overflow-hidden border-b border-surface-100 dark:border-surface-800"
           >
             <div className="p-2 space-y-1">
-              {MOCK_WORKSPACES.map(ws => (
+              {workspaces.map(ws => (
                 <button
                   key={ws.id}
                   className={cn(
                     'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors',
-                    ws.id === 'ws1'
+                    ws.id === workspace?.id
                       ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-300'
                       : 'text-surface-600 hover:bg-surface-50 dark:text-surface-400 dark:hover:bg-surface-800'
                   )}
                 >
                   <div
                     className="w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                    style={{ backgroundColor: ws.id === 'ws1' ? '#3366ff' : '#7c3aed' }}
+                    style={{ backgroundColor: ws.id === workspace?.id ? '#3366ff' : '#7c3aed' }}
                   >
                     {ws.name[0]}
                   </div>
                   <span className="truncate font-medium">{ws.name}</span>
-                  {ws.id === 'ws1' && <span className="ml-auto text-[10px] text-brand-500">✓</span>}
+                  {ws.id === workspace?.id && <span className="ml-auto text-[10px] text-brand-500">✓</span>}
                 </button>
               ))}
               <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-surface-500 hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">

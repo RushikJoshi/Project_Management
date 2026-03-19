@@ -7,7 +7,7 @@ import {
   ChevronDown, X, Send, AlertTriangle
 } from 'lucide-react';
 import { cn, formatDate, formatRelativeTime, generateId } from '../../utils/helpers';
-import { PRIORITY_CONFIG, STATUS_CONFIG, MOCK_USERS, MOCK_PROJECTS } from '../../app/data';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../app/constants';
 import { useAppStore } from '../../context/appStore';
 import { useAuthStore } from '../../context/authStore';
 import { UserAvatar, AvatarGroup } from '../UserAvatar';
@@ -21,7 +21,7 @@ interface TaskModalProps {
 }
 
 export const TaskModal: React.FC<TaskModalProps> = ({ task, open, onClose }) => {
-  const { updateTask, deleteTask } = useAppStore();
+  const { updateTask, deleteTask, projects, users } = useAppStore();
   const { user } = useAuthStore();
   const [editingTitle, setEditingTitle] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -32,9 +32,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, open, onClose }) => 
 
   if (!task) return null;
 
-  const project = MOCK_PROJECTS.find(p => p.id === task.projectId);
-  const assignees = MOCK_USERS.filter(u => task.assigneeIds.includes(u.id));
-  const reporter = MOCK_USERS.find(u => u.id === task.reporterId);
+  const project = projects.find(p => p.id === task.projectId);
+  const assignees = users.filter(u => task.assigneeIds.includes(u.id));
+  const reporter = users.find(u => u.id === task.reporterId);
   const priority = PRIORITY_CONFIG[task.priority];
   const statusCfg = STATUS_CONFIG[task.status];
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done';
@@ -195,7 +195,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, open, onClose }) => 
               <div className="space-y-4">
                 {/* Comments */}
                 {comments.map(comment => {
-                  const author = MOCK_USERS.find(u => u.id === comment.authorId) || MOCK_USERS[0];
+                  const author = users.find(u => u.id === comment.authorId) || users[0];
                   return (
                     <motion.div
                       key={comment.id}

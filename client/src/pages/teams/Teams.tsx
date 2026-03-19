@@ -3,16 +3,15 @@ import { motion } from 'framer-motion';
 import { Plus, Users, FolderKanban, Crown, MoreHorizontal, UserPlus, Mail } from 'lucide-react';
 import { cn } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
-import { MOCK_USERS } from '../../app/data';
 import { UserAvatar } from '../../components/UserAvatar';
 import { Modal } from '../../components/Modal';
 import { ProgressBar, EmptyState } from '../../components/ui';
 import type { Team } from '../../app/types';
 
 const TeamCard: React.FC<{ team: Team; onOpen: (t: Team) => void }> = ({ team, onOpen }) => {
-  const { projects, tasks } = useAppStore();
-  const members = MOCK_USERS.filter(u => team.members.includes(u.id));
-  const leader = MOCK_USERS.find(u => u.id === team.leaderId);
+  const { projects, tasks, users } = useAppStore();
+  const members = users.filter(u => team.members.includes(u.id));
+  const leader = users.find(u => u.id === team.leaderId);
   const teamProjects = projects.filter(p => team.projectIds.includes(p.id));
   const teamTasks = tasks.filter(t => teamProjects.some(p => p.id === t.projectId));
   const doneTasks = teamTasks.filter(t => t.status === 'done').length;
@@ -91,11 +90,11 @@ const TeamCard: React.FC<{ team: Team; onOpen: (t: Team) => void }> = ({ team, o
 };
 
 const TeamDetailModal: React.FC<{ team: Team | null; onClose: () => void }> = ({ team, onClose }) => {
-  const { projects, tasks } = useAppStore();
+  const { projects, tasks, users } = useAppStore();
   if (!team) return null;
 
-  const members = MOCK_USERS.filter(u => team.members.includes(u.id));
-  const leader = MOCK_USERS.find(u => u.id === team.leaderId);
+  const members = users.filter(u => team.members.includes(u.id));
+  const leader = users.find(u => u.id === team.leaderId);
   const teamProjects = projects.filter(p => team.projectIds.includes(p.id));
 
   return (

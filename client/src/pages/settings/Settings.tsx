@@ -10,7 +10,7 @@ import { useAuthStore } from '../../context/authStore';
 import { useAppStore } from '../../context/appStore';
 import { UserAvatar } from '../../components/UserAvatar';
 import { Tabs, TabsContent } from '../../components/ui';
-import { MOCK_WORKSPACES, PROJECT_COLORS } from '../../app/data';
+import { PROJECT_COLORS } from '../../app/constants';
 
 const TAB_ITEMS = [
   { value: 'profile', label: 'Profile', icon: <User size={14} /> },
@@ -50,7 +50,7 @@ const SettingRow: React.FC<{
 
 export const SettingsPage: React.FC = () => {
   const { user, updateUser } = useAuthStore();
-  const { darkMode, toggleDarkMode } = useAppStore();
+  const { darkMode, toggleDarkMode, workspaces } = useAppStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
@@ -58,7 +58,7 @@ export const SettingsPage: React.FC = () => {
   const [showNew, setShowNew] = useState(false);
   const [selectedColor, setSelectedColor] = useState(user?.color || PROJECT_COLORS[0]);
 
-  const workspace = MOCK_WORKSPACES[0];
+  const workspace = workspaces[0];
 
   const { register: registerProfile, handleSubmit: handleProfile } = useForm<ProfileForm>({
     defaultValues: {
