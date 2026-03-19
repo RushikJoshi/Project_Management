@@ -1,12 +1,13 @@
-import Team from '../models/Team.js';
-import ActivityLog from '../models/ActivityLog.js';
+import { getTenantModels } from '../config/tenantDb.js';
 
 export async function listTeams({ companyId, workspaceId }) {
+  const { Team } = getTenantModels(companyId);
   const items = await Team.find({ companyId, workspaceId }).sort({ createdAt: -1 });
   return items;
 }
 
 export async function createTeam({ companyId, workspaceId, userId, data }) {
+  const { Team, ActivityLog } = getTenantModels(companyId);
   const team = await Team.create({
     companyId,
     workspaceId,

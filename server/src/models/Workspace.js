@@ -23,6 +23,9 @@ workspaceSchema.set('toJSON', {
   },
 });
 
-const Workspace = mongoose.model('Workspace', workspaceSchema);
-export default Workspace;
+export function getWorkspaceModel(conn) {
+  return conn.models.Workspace || conn.model('Workspace', workspaceSchema);
+}
+
+export { workspaceSchema };
 

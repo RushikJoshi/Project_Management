@@ -1,11 +1,12 @@
-import QuickTask from '../models/QuickTask.js';
-import ActivityLog from '../models/ActivityLog.js';
+import { getTenantModels } from '../config/tenantDb.js';
 
 export async function listQuickTasks({ companyId, workspaceId }) {
+  const { QuickTask } = getTenantModels(companyId);
   return QuickTask.find({ companyId, workspaceId }).sort({ updatedAt: -1 });
 }
 
 export async function createQuickTask({ companyId, workspaceId, userId, data }) {
+  const { QuickTask, ActivityLog } = getTenantModels(companyId);
   const qt = await QuickTask.create({
     companyId,
     workspaceId,
@@ -33,6 +34,7 @@ export async function createQuickTask({ companyId, workspaceId, userId, data }) 
 }
 
 export async function updateQuickTask({ companyId, workspaceId, userId, id, updates }) {
+  const { QuickTask, ActivityLog } = getTenantModels(companyId);
   const qt = await QuickTask.findOneAndUpdate(
     { _id: id, companyId, workspaceId },
     {
@@ -60,6 +62,7 @@ export async function updateQuickTask({ companyId, workspaceId, userId, id, upda
 }
 
 export async function deleteQuickTask({ companyId, workspaceId, userId, id }) {
+  const { QuickTask, ActivityLog } = getTenantModels(companyId);
   const qt = await QuickTask.findOneAndDelete({ _id: id, companyId, workspaceId });
   if (!qt) return null;
 

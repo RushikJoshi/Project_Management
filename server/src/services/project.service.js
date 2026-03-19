@@ -1,8 +1,7 @@
-import Project from '../models/Project.js';
-import Team from '../models/Team.js';
-import ActivityLog from '../models/ActivityLog.js';
+import { getTenantModels } from '../config/tenantDb.js';
 
 export async function listProjects({ companyId, workspaceId, status, department, q, page = 1, limit = 50 }) {
+  const { Project } = getTenantModels(companyId);
   const filter = { companyId, workspaceId };
   if (status) filter.status = status;
   if (department) filter.department = department;
@@ -18,11 +17,13 @@ export async function listProjects({ companyId, workspaceId, status, department,
 }
 
 export async function getProject({ companyId, workspaceId, projectId }) {
+  const { Project } = getTenantModels(companyId);
   const project = await Project.findOne({ _id: projectId, companyId, workspaceId });
   return project;
 }
 
 export async function createProject({ companyId, workspaceId, userId, data }) {
+  const { Project, ActivityLog } = getTenantModels(companyId);
   const project = await Project.create({
     companyId,
     workspaceId,
@@ -56,6 +57,7 @@ export async function createProject({ companyId, workspaceId, userId, data }) {
 }
 
 export async function updateProject({ companyId, workspaceId, userId, projectId, updates }) {
+  const { Project, ActivityLog } = getTenantModels(companyId);
   const project = await Project.findOneAndUpdate(
     { _id: projectId, companyId, workspaceId },
     {
@@ -84,6 +86,7 @@ export async function updateProject({ companyId, workspaceId, userId, projectId,
 }
 
 export async function deleteProject({ companyId, workspaceId, userId, projectId }) {
+  const { Project, ActivityLog } = getTenantModels(companyId);
   const project = await Project.findOneAndDelete({ _id: projectId, companyId, workspaceId });
   if (!project) return null;
 

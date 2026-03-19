@@ -1,9 +1,7 @@
-import Task from '../models/Task.js';
-import Project from '../models/Project.js';
-import ActivityLog from '../models/ActivityLog.js';
-import Notification from '../models/Notification.js';
+import { getTenantModels } from '../config/tenantDb.js';
 
 export async function listTasks({ companyId, workspaceId, projectId, assigneeId, status, priority, page = 1, limit = 200 }) {
+  const { Task } = getTenantModels(companyId);
   const filter = { companyId, workspaceId };
   if (projectId) filter.projectId = projectId;
   if (assigneeId) filter.assigneeIds = assigneeId;
@@ -19,6 +17,7 @@ export async function listTasks({ companyId, workspaceId, projectId, assigneeId,
 }
 
 export async function createTask({ companyId, workspaceId, userId, data }) {
+  const { Task, Project, ActivityLog, Notification } = getTenantModels(companyId);
   const task = await Task.create({
     companyId,
     workspaceId,
@@ -67,6 +66,7 @@ export async function createTask({ companyId, workspaceId, userId, data }) {
 }
 
 export async function updateTask({ companyId, workspaceId, userId, taskId, updates }) {
+  const { Task, ActivityLog } = getTenantModels(companyId);
   const task = await Task.findOneAndUpdate(
     { _id: taskId, companyId, workspaceId },
     {
@@ -99,6 +99,7 @@ export async function moveTaskStatus({ companyId, workspaceId, userId, taskId, s
 }
 
 export async function deleteTask({ companyId, workspaceId, userId, taskId }) {
+  const { Task, Project, ActivityLog } = getTenantModels(companyId);
   const task = await Task.findOneAndDelete({ _id: taskId, companyId, workspaceId });
   if (!task) return null;
 

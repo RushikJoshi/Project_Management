@@ -26,7 +26,6 @@ export function requireRole(roles) {
 }
 
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model.js';
 
 export const verifyToken = async (req, res, next) => {
     try {

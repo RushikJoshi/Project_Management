@@ -34,6 +34,9 @@ quickTaskSchema.set('toJSON', {
   },
 });
 
-const QuickTask = mongoose.model('QuickTask', quickTaskSchema);
-export default QuickTask;
+export function getQuickTaskModel(conn) {
+  return conn.models.QuickTask || conn.model('QuickTask', quickTaskSchema);
+}
+
+export { quickTaskSchema };
 

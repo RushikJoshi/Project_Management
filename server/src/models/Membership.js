@@ -22,6 +22,9 @@ membershipSchema.set('toJSON', {
   },
 });
 
-const Membership = mongoose.model('Membership', membershipSchema);
-export default Membership;
+export function getMembershipModel(conn) {
+  return conn.models.Membership || conn.model('Membership', membershipSchema);
+}
+
+export { membershipSchema };
 

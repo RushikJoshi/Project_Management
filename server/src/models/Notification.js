@@ -29,6 +29,9 @@ notificationSchema.set('toJSON', {
   },
 });
 
-const Notification = mongoose.model('Notification', notificationSchema);
-export default Notification;
+export function getNotificationModel(conn) {
+  return conn.models.Notification || conn.model('Notification', notificationSchema);
+}
+
+export { notificationSchema };
 

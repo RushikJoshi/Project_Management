@@ -1,23 +1,27 @@
-import User from '../models/User.js';
-import Membership from '../models/Membership.js';
+import AuthLookup from '../models/AuthLookup.js';
+import { getTenantModels } from '../config/tenantDb.js';
 import { hashPassword } from '../utils/password.js';
 
-export async function getMe({ userId }) {
+export async function getMe({ companyId, userId }) {
+  const { User } = getTenantModels(companyId);
   const user = await User.findById(userId);
   return user;
 }
 
 export async function listUsers({ companyId }) {
+  const { User } = getTenantModels(companyId);
   const users = await User.find({ companyId }).sort({ createdAt: -1 });
   return users;
 }
 
 export async function getUser({ companyId, id }) {
+  const { User } = getTenantModels(companyId);
   const user = await User.findOne({ _id: id, companyId });
   return user;
 }
 
 export async function createUser({ companyId, workspaceId, actorRole, input }) {
+  const { User, Membership } = getTenantModels(companyId);
   if (!['super_admin', 'admin'].includes(actorRole)) {
     const err = new Error('Only company admins can create users');
     err.statusCode = 403;
@@ -57,6 +61,12 @@ export async function createUser({ companyId, workspaceId, actorRole, input }) {
     isActive: true,
     color: input.color?.trim() || '#3366ff',
   });
+
+  await AuthLookup.updateOne(
+    { email },
+    { $set: { email, companyId } },
+    { upsert: true }
+  );
 
   await Membership.updateOne(
     { companyId, workspaceId, userId: user._id },

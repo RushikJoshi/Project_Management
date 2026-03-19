@@ -89,6 +89,9 @@ taskSchema.set('toJSON', {
   },
 });
 
-const Task = mongoose.model('Task', taskSchema);
-export default Task;
+export function getTaskModel(conn) {
+  return conn.models.Task || conn.model('Task', taskSchema);
+}
+
+export { taskSchema };
 

@@ -31,6 +31,9 @@ activityLogSchema.set('toJSON', {
   },
 });
 
-const ActivityLog = mongoose.model('ActivityLog', activityLogSchema);
-export default ActivityLog;
+export function getActivityLogModel(conn) {
+  return conn.models.ActivityLog || conn.model('ActivityLog', activityLogSchema);
+}
+
+export { activityLogSchema };
 

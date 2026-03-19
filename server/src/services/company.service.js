@@ -1,22 +1,23 @@
 import Company from '../models/Company.js';
-import User from '../models/User.js';
-import Project from '../models/Project.js';
-import Workspace from '../models/Workspace.js';
-import Membership from '../models/Membership.js';
+import AuthLookup from '../models/AuthLookup.js';
+import { getTenantModels } from '../config/tenantDb.js';
 import { hashPassword } from '../utils/password.js';
 
 export async function listCompanies() {
   const companies = await Company.find().sort({ createdAt: -1 });
 
   // lightweight counts (can be optimized with aggregation later)
-  const ids = companies.map((c) => c._id);
-  const [userCounts, projectCounts] = await Promise.all([
-    User.aggregate([{ $match: { companyId: { $in: ids } } }, { $group: { _id: '$companyId', count: { $sum: 1 } } }]),
-    Project.aggregate([{ $match: { companyId: { $in: ids } } }, { $group: { _id: '$companyId', count: { $sum: 1 } } }]),
-  ]);
-
-  const uMap = new Map(userCounts.map((x) => [String(x._id), x.count]));
-  const pMap = new Map(projectCounts.map((x) => [String(x._id), x.count]));
+  const uMap = new Map();
+  const pMap = new Map();
+  await Promise.all(companies.map(async (c) => {
+    const { User, Project } = getTenantModels(c._id);
+    const [uc, pc] = await Promise.all([
+      User.countDocuments({ companyId: c._id }),
+      Project.countDocuments({ companyId: c._id }),
+    ]);
+    uMap.set(c.id, uc);
+    pMap.set(c.id, pc);
+  }));
 
   return companies.map((c) => ({
     id: c.id,
@@ -45,6 +46,14 @@ export async function createCompanyWithAdmin({ name, adminName, adminEmail, admi
     status,
     color: '#3366ff',
   });
+
+  await AuthLookup.updateOne(
+    { email: adminEmail.toLowerCase() },
+    { $set: { email: adminEmail.toLowerCase(), companyId: company._id } },
+    { upsert: true }
+  );
+
+  const { User, Workspace, Membership } = getTenantModels(company._id);
 
   const passwordHash = await hashPassword(adminPassword);
   const admin = await User.create({

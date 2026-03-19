@@ -31,6 +31,9 @@ teamSchema.set('toJSON', {
   },
 });
 
-const Team = mongoose.model('Team', teamSchema);
-export default Team;
+export function getTeamModel(conn) {
+  return conn.models.Team || conn.model('Team', teamSchema);
+}
+
+export { teamSchema };
 

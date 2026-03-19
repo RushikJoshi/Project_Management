@@ -1,8 +1,6 @@
-import User from '../models/User.js';
 import Company from '../models/Company.js';
-import Workspace from '../models/Workspace.js';
-import Membership from '../models/Membership.js';
-import RefreshToken from '../models/RefreshToken.js';
+import AuthLookup from '../models/AuthLookup.js';
+import { getTenantModels } from '../config/tenantDb.js';
 
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
@@ -34,16 +32,24 @@ export async function register({ name, email, password, workspaceName }) {
   // but your UI includes signup -> create workspace.
   const company = await Company.create({
     name: workspaceName || `${name}'s Company`,
-    email,
+    email: email.toLowerCase(),
     status: 'trial',
     color: '#3366ff',
   });
+
+  await AuthLookup.updateOne(
+    { email: email.toLowerCase() },
+    { $set: { email: email.toLowerCase(), companyId: company._id } },
+    { upsert: true }
+  );
+
+  const { User, Workspace, Membership } = getTenantModels(company._id);
 
   const passwordHash = await hashPassword(password);
   const user = await User.create({
     companyId: company._id,
     name,
-    email,
+    email: email.toLowerCase(),
     passwordHash,
     role: 'admin',
     isActive: true,
@@ -70,6 +76,15 @@ export async function register({ name, email, password, workspaceName }) {
 }
 
 export async function login({ email, password }) {
+  const lookup = await AuthLookup.findOne({ email: email.toLowerCase() });
+  if (!lookup) {
+    const err = new Error('Invalid credentials');
+    err.statusCode = 401;
+    err.code = 'INVALID_CREDENTIALS';
+    throw err;
+  }
+
+  const { User, Membership } = getTenantModels(lookup.companyId);
   const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
   if (!user || !user.isActive) {
     const err = new Error('Invalid credentials');
@@ -102,6 +117,7 @@ export async function refresh({ refreshToken, userAgent, ip }) {
   const decoded = verifyRefreshToken(refreshToken);
   const tokenHash = sha256(refreshToken);
 
+  const { RefreshToken, User, Membership } = getTenantModels(decoded.companyId);
   const existing = await RefreshToken.findOne({ tokenHash });
   if (!existing || existing.revokedAt) {
     const err = new Error('Refresh token revoked');
@@ -150,10 +166,13 @@ export async function refresh({ refreshToken, userAgent, ip }) {
 export async function logout({ refreshToken }) {
   if (!refreshToken) return;
   const tokenHash = sha256(refreshToken);
+  const decoded = verifyRefreshToken(refreshToken);
+  const { RefreshToken } = getTenantModels(decoded.companyId);
   await RefreshToken.updateOne({ tokenHash }, { $set: { revokedAt: new Date() } });
 }
 
 async function issueTokens({ userId, companyId, workspaceId, rotatedFromHash = null, userAgent = null, ip = null }) {
+  const { User, RefreshToken } = getTenantModels(companyId);
   const user = await User.findById(userId);
   if (!user) {
     const err = new Error('User not found');
