@@ -50,7 +50,7 @@ const LICENSE_DISTRIBUTION = [
 ];
 
 const TOP_COMPANIES = [
-  { name: 'Acme Corp', users: 154, activity: 92 },
+  { name: 'Gitakshmi', users: 154, activity: 92 },
   { name: 'Global Tech', users: 89, activity: 85 },
   { name: 'Stellar Systems', users: 45, activity: 78 },
   { name: 'Flowboard', users: 210, activity: 95 },

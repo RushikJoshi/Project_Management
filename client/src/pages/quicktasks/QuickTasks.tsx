@@ -173,7 +173,7 @@ export const QuickTasksPage: React.FC = () => {
               icon={<CheckCircle2 size={28} />}
               title="No quick tasks found"
               description="Try changing filters or create a new quick task"
-              action={<button className="btn-primary btn-sm hidden md:flex" onClick={openNew}><Plus size={16} /> New Quick Task</button>}
+              // action={<button className="btn-primary btn-sm hidden md:flex" onClick={openNew}><Plus size={16} /> New Quick Task</button>}
             />
           ) : (
             <div className="space-y-2">

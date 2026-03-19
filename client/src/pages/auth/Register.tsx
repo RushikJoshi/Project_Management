@@ -67,7 +67,7 @@ export const RegisterPage: React.FC = () => {
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400" />
                 <input
                   {...register('name', { required: 'Name is required' })}
-                  placeholder="John Doe"
+                  placeholder="Enter Your Full Name"
                   className={cn('input pl-9', errors.name && 'border-rose-400')}
                 />
               </div>

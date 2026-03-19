@@ -1,16 +1,24 @@
-    import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-    const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/PMS';
+function getMongoUri() {
+  return process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/PMS';
+}
 
-    const connectDB = async () => {
-        try {
-            const conn = await mongoose.connect(mongoURI);
+const connectDB = async () => {
+  const mongoURI = getMongoUri();
 
-            console.log("Database connected successfully ", conn.connection.host);
-        }
-        catch(error){
-            console.log("Databse Connection failed", error.message);
-        }
-    }
+  try {
+    const conn = await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 10000,
+    });
 
-    export default connectDB;
+    console.log('Database connected successfully', conn.connection.host);
+    return conn;
+  } catch (error) {
+    console.error('Database connection failed:', error.message);
+    console.error('Mongo URI:', mongoURI);
+    throw error;
+  }
+};
+
+export default connectDB;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Send, Paperclip, ChevronLeft, User, MessageCircle, MoreVertical, Smile, Users, Plus, ChevronDown } from 'lucide-react';
+import { X, Search, Send, Paperclip, ChevronLeft, MessageCircle, Users, Plus, ChevronDown } from 'lucide-react';
 import { useAdminChatStore, Conversation, Message } from '../store/useAdminChatStore.ts';
 import { useAuthStore } from '../../../../context/authStore.ts';
 import { format } from 'date-fns';
@@ -10,12 +10,14 @@ import api from '../../../../services/api';
 
 const MessageBubble = ({ message, isMe }: { message: Message, isMe: boolean }) => (
     <div className={cn(
-        "flex flex-col mb-4",
+        "flex flex-col mb-4 max-w-full",
         isMe ? "items-end" : "items-start"
     )}>
         <div className={cn(
-            "max-w-[85%] px-4 py-3 rounded-2xl text-[14px] leading-relaxed",
-            isMe ? "bg-brand-500 text-white rounded-tr-none" : "bg-surface-100 text-surface-900 rounded-tl-none border border-surface-200"
+            "max-w-[85%] px-4 py-3 rounded-2xl text-[14px] leading-relaxed shadow-sm break-words",
+            isMe
+                ? "bg-brand-500 text-white rounded-br-md"
+                : "bg-white text-surface-900 rounded-bl-md border border-surface-200"
         )}>
             {message.text}
         </div>
@@ -261,7 +263,7 @@ export const AdminChatSidebar = () => {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'tween', duration: 0.3 }}
-                        className="fixed inset-y-0 right-0 w-full xs:w-[320px] sm:w-[350px] bg-white shadow-xl z-[110] flex flex-col border-l border-surface-200 text-surface-900 font-sans"
+                        className="fixed inset-y-0 right-0 w-full xs:w-[340px] sm:w-[380px] bg-white shadow-xl z-[110] flex flex-col border-l border-surface-200 text-surface-900 font-sans"
                     >
                         {isCreatingGroup ? (
                             <CreateGroupView 
@@ -412,35 +414,53 @@ export const AdminChatSidebar = () => {
                             </>
                         ) : (
                             <>
-                                <div className="px-6 py-3 border-b border-surface-100 flex items-center justify-between bg-white sticky top-[60px] z-10 shadow-sm">
-                                     <div className="flex items-center gap-3">
-                                         <div className="w-10 h-10 rounded-full bg-surface-100 border border-surface-200 flex items-center justify-center font-semibold text-brand-600 relative">
-                                             {activeConvo?.isGroup ? <Users size={18} /> : (currentRecipient ? currentRecipient[0] : 'U')}
-                                             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white" />
+                                <div className="px-5 py-4 border-b border-surface-100 flex items-center justify-between bg-white shrink-0 shadow-sm">
+                                     <div className="flex items-center gap-3 min-w-0">
+                                         <button
+                                            className="sm:hidden p-2 -ml-2 text-surface-400 hover:text-surface-900 rounded-lg"
+                                            onClick={() => setActiveConversation(null)}
+                                         >
+                                            <ChevronLeft size={18} />
+                                         </button>
+                                         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-surface-50 to-surface-100 border border-surface-200 flex items-center justify-center text-brand-600 relative shrink-0 shadow-inner">
+                                             {activeConvo?.isGroup ? <Users size={24} /> : <span className="text-lg font-semibold">{currentRecipient ? currentRecipient[0] : 'U'}</span>}
+                                             <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white" />
                                          </div>
-                                         <div className="flex-1">
-                                              <div className="text-[15px] font-semibold text-surface-900 leading-tight">
+                                         <div className="flex-1 min-w-0">
+                                              <div className="text-[15px] font-semibold text-surface-900 leading-tight truncate">
                                                   {currentRecipient}
                                               </div>
-                                              <span className="text-[11px] text-emerald-500 font-medium block">
+                                              <span className="text-[12px] text-emerald-500 font-semibold block mt-0.5 truncate">
                                                   {activeConvo?.isGroup ? `@${activeConvo.participants.length} members` : 'Online'}
                                               </span>
                                          </div>
                                      </div>
-                                     <button className="p-2 text-surface-400 hover:text-surface-900 rounded-lg" onClick={() => setActiveConversation(null)}>
+                                     <button className="hidden sm:flex p-2 text-surface-400 hover:text-surface-900 rounded-lg" onClick={() => setActiveConversation(null)}>
                                          <X size={18} />
                                      </button>
                                 </div>
 
-                                <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 pb-8 space-y-1 bg-surface-50/30">
-                                    {messages.map(msg => (
-                                        <MessageBubble key={msg._id} message={msg} isMe={isMeCheck(msg.senderId)} />
-                                    ))}
+                                <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gradient-to-b from-surface-50/80 to-white px-4 py-5 sm:px-5">
+                                    {messages.length > 0 ? (
+                                        <div className="space-y-1">
+                                            {messages.map(msg => (
+                                                <MessageBubble key={msg._id} message={msg} isMe={isMeCheck(msg.senderId)} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="h-full min-h-[240px] flex flex-col items-center justify-center text-center text-surface-400 px-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-white border border-surface-200 flex items-center justify-center shadow-sm mb-4">
+                                                <MessageCircle size={24} className="opacity-60" />
+                                            </div>
+                                            <p className="text-sm font-medium text-surface-600">No messages yet</p>
+                                            <p className="text-xs mt-1 max-w-[220px]">Start the conversation with a quick update or question.</p>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="p-4 p-b-8 border-t border-surface-200 bg-white">
-                                    <form onSubmit={handleSend} className="relative flex items-center gap-2 bg-surface-50 border border-surface-200 p-1 rounded-2xl focus-within:border-brand-500/50 focus-within:bg-white transition-all">
-                                        <button type="button" className="p-2.5 text-surface-400 hover:text-brand-500 transition-colors">
+                                <div className="p-4 border-t border-surface-200 bg-white shrink-0">
+                                    <form onSubmit={handleSend} className="relative flex items-center gap-2 rounded-3xl border border-brand-200 bg-white px-2 py-1.5 shadow-[0_8px_24px_rgba(51,102,255,0.08)] focus-within:border-brand-400 transition-all">
+                                        <button type="button" className="p-2.5 text-surface-400 hover:text-brand-500 transition-colors rounded-xl">
                                             <Paperclip size={18} />
                                         </button>
                                         <input
@@ -448,11 +468,11 @@ export const AdminChatSidebar = () => {
                                             placeholder="Type a message..."
                                             value={input}
                                             onChange={e => setInput(e.target.value)}
-                                            className="flex-1 bg-transparent text-[14px] text-surface-900 placeholder:text-surface-400 py-3 outline-none px-1"
+                                            className="flex-1 bg-transparent text-[14px] text-surface-900 placeholder:text-surface-400 py-3 outline-none px-1 min-w-0"
                                         />
                                         <button 
                                             type="submit" 
-                                            className="p-3 bg-brand-500 text-white rounded-xl shadow shadow-brand-500/20 hover:bg-brand-600 transition-all active:scale-95 disabled:opacity-30 disabled:scale-100"
+                                            className="p-3 bg-brand-500 text-white rounded-2xl shadow shadow-brand-500/20 hover:bg-brand-600 transition-all active:scale-95 disabled:opacity-30 disabled:scale-100"
                                             disabled={!input.trim()}
                                         >
                                             <Send size={18} />

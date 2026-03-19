@@ -513,7 +513,7 @@ export const DashboardPage: React.FC = () => {
             <div className="space-y-4">
               {[
                 { type: 'signup', company: 'Nebula Labs', time: '12m ago', icon: <Plus size={12} />, color: 'bg-emerald-500' },
-                { type: 'upgrade', company: 'Acme Corp', time: '1h ago', icon: <TrendingUp size={12} />, color: 'bg-brand-500' },
+                { type: 'upgrade', company: 'Gitakshmi', time: '1h ago', icon: <TrendingUp size={12} />, color: 'bg-brand-500' },
                 { type: 'alert', company: 'Global Tech', time: '3h ago', icon: <AlertTriangle size={12} />, color: 'bg-rose-500' },
                 { type: 'signup', company: 'Stellar Inc', time: '5h ago', icon: <Plus size={12} />, color: 'bg-emerald-500' },
               ].map((event, i) => (

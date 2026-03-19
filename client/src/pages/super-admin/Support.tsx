@@ -5,7 +5,7 @@ import { cn, formatDate } from '../../utils/helpers';
 import { Table } from '../../components/ui';
 
 const TICKETS = [
-  { id: 'tk1', company: 'Acme Corp', subject: 'Cannot login to mobile app', status: 'open', priority: 'high', category: 'Technical', createdAt: '2024-03-15T09:30:00' },
+  { id: 'tk1', company: 'Gitakshmi', subject: 'Cannot login to mobile app', status: 'open', priority: 'high', category: 'Technical', createdAt: '2024-03-15T09:30:00' },
   { id: 'tk2', company: 'Global Tech', subject: 'Billing inquiry Q1', status: 'pending', priority: 'medium', category: 'Billing', createdAt: '2024-03-15T08:15:00' },
   { id: 'tk3', company: 'Stellar Systems', subject: 'How to export reports?', status: 'resolved', priority: 'low', category: 'Usage', createdAt: '2024-03-14T15:00:00' },
   { id: 'tk4', company: 'Flowboard', subject: 'Feature request: Gantt views', status: 'open', priority: 'medium', category: 'Feature', createdAt: '2024-03-14T11:45:00' },

@@ -14,7 +14,7 @@ const MODULES = [
 ];
 
 const COMPANIES = [
-  { id: 'c1', name: 'Acme Corp', modules: ['tasks', 'projects', 'chat', 'files', 'calendar'] },
+  { id: 'c1', name: 'Gitakshmi', modules: ['tasks', 'projects', 'chat', 'files', 'calendar'] },
   { id: 'c2', name: 'Global Tech', modules: ['tasks', 'projects', 'files'] },
   { id: 'c3', name: 'Stellar Systems', modules: ['tasks', 'chat', 'calendar'] },
   { id: 'c4', name: 'Flowboard', modules: ['tasks', 'projects', 'chat', 'files', 'calendar', 'reports'] },

@@ -220,7 +220,7 @@ export const CompaniesPage: React.FC = () => {
               <input
                 {...register('name', { required: 'Company name is required' })}
                 className={cn('input', errors.name && 'border-rose-400')}
-                placeholder="Acme Corp"
+                placeholder="Gitakshmi"
               />
             </div>
 
@@ -229,7 +229,7 @@ export const CompaniesPage: React.FC = () => {
               <input
                 {...register('adminName', { required: 'Admin name is required' })}
                 className={cn('input', errors.adminName && 'border-rose-400')}
-                placeholder="John Doe"
+                placeholder="Enter Your Full Name"
               />
             </div>
 
@@ -238,7 +238,7 @@ export const CompaniesPage: React.FC = () => {
               <input
                 {...register('adminEmail', { required: 'Admin email is required' })}
                 className={cn('input', errors.adminEmail && 'border-rose-400')}
-                placeholder="admin@acme.com"
+                placeholder="Enter User's Company Email"
               />
             </div>
 

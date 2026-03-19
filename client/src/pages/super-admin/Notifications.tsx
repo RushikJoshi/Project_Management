@@ -8,7 +8,7 @@ const NOTIF_HISTORY = [
   { id: 'h1', title: 'System Maintenance', message: 'The system will be down for maintenance on Sunday at 2 AM EST.', target: 'All Users', type: 'urgent', sentAt: '2024-03-15T10:00:00', reach: '24.5k' },
   { id: 'h2', title: 'New Feature: AI Assistant', message: 'We have launched a new AI assistant to help you manage tasks.', target: 'Pro/Enterprise', type: 'info', sentAt: '2024-03-12T14:30:00', reach: '12.8k' },
   { id: 'h3', title: 'Security Update', message: 'Please update your mobile app to the latest version for security fixes.', target: 'All Users', type: 'warning', sentAt: '2024-03-10T09:15:00', reach: '24.2k' },
-  { id: 'h4', title: 'Welcome to Acme Corp', message: 'Glad to have you onboard! Let us know if you need any help.', target: 'Acme Corp', type: 'success', sentAt: '2024-03-08T16:45:00', reach: '154' },
+  { id: 'h4', title: 'Welcome to Gitakshmi', message: 'Glad to have you onboard! Let us know if you need any help.', target: 'Gitakshmi', type: 'success', sentAt: '2024-03-08T16:45:00', reach: '154' },
 ];
 
 export const NotificationsPage: React.FC = () => {
@@ -61,7 +61,7 @@ export const NotificationsPage: React.FC = () => {
                 <div>
                   <label className="label">Select Company</label>
                   <select className="input">
-                    <option>Acme Corp</option>
+                    <option>Gitakshmi</option>
                     <option>Global Tech</option>
                     <option>Stellar Systems</option>
                   </select>

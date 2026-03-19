@@ -5,7 +5,7 @@ import { cn, formatDate, formatRelativeTime } from '../../utils/helpers';
 import { Table } from '../../components/ui';
 
 const LOG_ENTRIES = [
-  { id: 'l1', user: 'Alex Morgan', action: 'Created Company', module: 'Companies', entity: 'Acme Corp', timestamp: '2024-03-15T11:20:00', type: 'create' },
+  { id: 'l1', user: 'Alex Morgan', action: 'Created Company', module: 'Companies', entity: 'Gitakshmi', timestamp: '2024-03-15T11:20:00', type: 'create' },
   { id: 'l2', user: 'Sarah Chen', action: 'Updated Permissions', module: 'Roles', entity: 'Support Agent', timestamp: '2024-03-15T10:45:00', type: 'update' },
   { id: 'l3', user: 'System', action: 'Daily Backup Completed', module: 'Infrastructure', entity: 'DB_Backup_0315', timestamp: '2024-03-15T02:00:00', type: 'info' },
   { id: 'l4', user: 'Alex Morgan', action: 'Suspended User', module: 'Users', entity: 'ryan@acme.com', timestamp: '2024-03-14T16:30:00', type: 'delete' },

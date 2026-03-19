@@ -88,7 +88,7 @@ export const UsersPage: React.FC = () => {
                 </div>
               )
             },
-            { key: 'company', header: 'Company', render: (u: any) => <span className="text-sm font-medium">Acme Corp</span> },
+            { key: 'company', header: 'Company', render: (u: any) => <span className="text-sm font-medium">Gitakshmi</span> },
             {
               key: 'role', header: 'Role',
               render: (u: any) => {
@@ -129,16 +129,16 @@ export const UsersPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="label">Full Name</label>
-              <input defaultValue={selectedUser?.name} className="input" placeholder="e.g. John Doe" />
+              <input defaultValue={selectedUser?.name} className="input" placeholder="e.g. Dhiren Makwana" />
             </div>
             <div className="col-span-2">
               <label className="label">Email Address</label>
-              <input defaultValue={selectedUser?.email} className="input" placeholder="e.g. john@example.com" />
+              <input defaultValue={selectedUser?.email} className="input" placeholder="e.g. yourname@example.com" />
             </div>
             <div className="col-span-2">
               <label className="label">Company</label>
               <select className="input">
-                <option>Acme Corp</option>
+                <option>Gitakshmi</option>
                 <option>Global Tech</option>
                 <option>Stellar Systems</option>
               </select>

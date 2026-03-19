@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Calendar, Flag, User, X } from 'lucide-react';
+import { Calendar, Flag, Search, User, X } from 'lucide-react';
 import { Modal } from '../Modal';
 import { cn, generateId } from '../../utils/helpers';
 import { useAppStore } from '../../context/appStore';
@@ -33,6 +33,8 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({ open, onClose, t
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<QuickTaskFormData>({
     defaultValues: {
@@ -45,6 +47,10 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({ open, onClose, t
     },
   });
 
+  const [assigneeOpen, setAssigneeOpen] = useState(false);
+  const [assigneeQuery, setAssigneeQuery] = useState('');
+  const assigneeRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     reset({
       title: task?.title ?? '',
@@ -56,9 +62,54 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({ open, onClose, t
     });
   }, [task, reset, open]);
 
+  useEffect(() => {
+    setAssigneeOpen(false);
+    setAssigneeQuery('');
+  }, [open, task]);
+
+  useEffect(() => {
+    if (!assigneeOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (assigneeRef.current?.contains(event.target as Node)) return;
+      setAssigneeOpen(false);
+      setAssigneeQuery('');
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [assigneeOpen]);
+
   const assignableUsers = users
     .filter(u => u.isActive)
     .filter(u => ASSIGNABLE_ROLES.includes(u.role));
+
+  const selectedAssigneeId = watch('assigneeId');
+  const selectedAssignee = assignableUsers.find((u) => u.id === selectedAssigneeId) ?? null;
+
+  const filteredAssignableUsers = useMemo(() => {
+    const query = assigneeQuery.trim().toLowerCase();
+    if (!query) return assignableUsers;
+
+    return assignableUsers.filter((u) => {
+      const roleLabel = u.role.replace(/_/g, ' ');
+      return (
+        u.name.toLowerCase().includes(query) ||
+        u.email.toLowerCase().includes(query) ||
+        roleLabel.includes(query)
+      );
+    });
+  }, [assignableUsers, assigneeQuery]);
+
+  const assigneeLabel = selectedAssignee
+    ? `${selectedAssignee.name} (${selectedAssignee.role.replace(/_/g, ' ')})`
+    : 'Unassigned';
+
+  const handleAssigneeSelect = (assigneeId: string) => {
+    setValue('assigneeId', assigneeId, { shouldDirty: true });
+    setAssigneeOpen(false);
+    setAssigneeQuery('');
+  };
 
   const onSubmit = (data: QuickTaskFormData) => {
     const now = new Date().toISOString();
@@ -180,16 +231,84 @@ export const QuickTaskModal: React.FC<QuickTaskModalProps> = ({ open, onClose, t
 
           <div>
             <label className="label">Assignee</label>
-            <div className="relative">
-              <select {...register('assigneeId')} className="input pr-10 appearance-none">
-                <option value="">Unassigned</option>
-                {assignableUsers.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.role.replace('_', ' ')})
-                  </option>
-                ))}
-              </select>
-              <User size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none" />
+            <div ref={assigneeRef} className="relative">
+              <input type="hidden" {...register('assigneeId')} />
+              <div
+                className={cn(
+                  'input min-h-[44px] flex items-center gap-2 pr-10',
+                  assigneeOpen && 'ring-2 ring-brand-200 border-brand-400'
+                )}
+              >
+                <Search size={14} className="text-surface-400 flex-shrink-0" />
+                <input
+                  value={assigneeOpen ? assigneeQuery : assigneeLabel}
+                  onFocus={() => setAssigneeOpen(true)}
+                  onChange={(e) => {
+                    setAssigneeOpen(true);
+                    setAssigneeQuery(e.target.value);
+                  }}
+                  placeholder="Search assignee..."
+                  className="flex-1 bg-transparent outline-none text-surface-800 dark:text-surface-200 placeholder:text-surface-400"
+                />
+              </div>
+              <User size={14} className="absolute right-3 top-[22px] -translate-y-1/2 text-surface-400 pointer-events-none" />
+
+              {assigneeOpen && (
+                <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-30 overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 shadow-card">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleAssigneeSelect('')}
+                    className={cn(
+                      'w-full flex items-center justify-between px-4 py-3 text-left text-sm transition-colors',
+                      !selectedAssigneeId
+                        ? 'bg-brand-600 text-white'
+                        : 'text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800/60'
+                    )}
+                  >
+                    <span>Unassigned</span>
+                    <span className={cn('text-[11px]', !selectedAssigneeId ? 'text-white/80' : 'text-surface-400')}>No owner</span>
+                  </button>
+
+                  <div className="max-h-52 overflow-y-auto border-t border-surface-100 dark:border-surface-800">
+                    {filteredAssignableUsers.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-surface-400">
+                        No matching assignees found.
+                      </div>
+                    ) : (
+                      filteredAssignableUsers.map((u) => {
+                        const isSelected = u.id === selectedAssigneeId;
+                        return (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleAssigneeSelect(u.id)}
+                            className={cn(
+                              'w-full px-4 py-3 text-left transition-colors',
+                              isSelected
+                                ? 'bg-brand-50 dark:bg-brand-950/30'
+                                : 'hover:bg-surface-50 dark:hover:bg-surface-800/60'
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span className={cn('text-sm font-medium', isSelected ? 'text-brand-700 dark:text-brand-300' : 'text-surface-800 dark:text-surface-200')}>
+                                {u.name}
+                              </span>
+                              <span className="text-[11px] uppercase tracking-wide text-surface-400">
+                                {u.role.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                            <div className="mt-0.5 text-xs text-surface-400">
+                              {u.email}
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

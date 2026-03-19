@@ -13,11 +13,7 @@ interface LoginForm {
 }
 
 const DEMO_ROLES: { role: Role; label: string; color: string }[] = [
-  { role: 'super_admin', label: 'Super Admin', color: '#f43f5e' },
-  { role: 'admin', label: 'Admin', color: '#7c3aed' },
-  { role: 'manager', label: 'Manager', color: '#3366ff' },
-  { role: 'team_leader', label: 'Team Leader', color: '#f59e0b' },
-  { role: 'team_member', label: 'Team Member', color: '#10b981' },
+  { role: 'super_admin', label: 'Seeded Super Admin', color: '#f43f5e' },
 ];
 
 export const LoginPage: React.FC = () => {
@@ -27,7 +23,7 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<LoginForm>({
-    defaultValues: { email: 'team@flowboard.io', password: 'password', remember: false }
+    defaultValues: { email: 'gitakshmi@gmail.com', password: 'Gitakshmi@123', remember: false }
   });
 
   const onSubmit = async (data: LoginForm) => {
@@ -42,15 +38,21 @@ export const LoginPage: React.FC = () => {
 
   const loginAsRole = async (role: Role) => {
     const roleEmails: Record<Role, string> = {
-      super_admin: 'alex@flowboard.io',
-      admin: 'sarah@acme.com',
-      manager: 'james@acme.com',
-      team_leader: 'emily@acme.com',
-      team_member: 'marcus@acme.com',
+      super_admin: 'gitakshmi@gmail.com',
+      admin: 'gitakshmi@gmail.com',
+      manager: 'gitakshmi@gmail.com',
+      team_leader: 'gitakshmi@gmail.com',
+      team_member: 'gitakshmi@gmail.com',
     };
+    setError('');
     setValue('email', roleEmails[role]);
-    await login(roleEmails[role], 'password', role);
-    navigate('/dashboard');
+    setValue('password', 'Gitakshmi@123');
+    const result = await login(roleEmails[role], 'Gitakshmi@123', role);
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.error || 'Invalid credentials');
+    }
   };
 
   return (
